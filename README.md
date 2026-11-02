@@ -6,9 +6,9 @@
 </p>
 
 <p align="center">
-  <a href="https://philipbos.github.io/echofield-fm1/emulator/"><b>Try it in your browser</b></a> ·
-  <a href="https://philipbos.github.io/echofield-fm1/flasher/"><b>Install it</b></a> ·
-  <a href="https://philipbos.github.io/echofield-fm1/"><b>Companion app</b></a> ·
+  <a href="https://philip-bos.github.io/echofield-fm1/emulator/"><b>Try it in your browser</b></a> ·
+  <a href="https://philip-bos.github.io/echofield-fm1/flasher/"><b>Install it</b></a> ·
+  <a href="https://philip-bos.github.io/echofield-fm1/"><b>Companion app</b></a> ·
   <a href="#watch-it">Watch it</a>
 </p>
 
@@ -52,9 +52,9 @@ talk to the FM-1 over USB (Web MIDI).
 
 | | | |
 | --- | --- | --- |
-| **[Emulator](https://philipbos.github.io/echofield-fm1/emulator/)** | the whole firmware in your browser, on a drawn FM-1, with the factory sounds | no FM-1 needed |
-| **[Flasher](https://philipbos.github.io/echofield-fm1/flasher/)** | installs and updates ECHOFIELD, puts the factory sounds on, or goes back to the stock firmware | computers only |
-| **[Companion](https://philipbos.github.io/echofield-fm1/)** | the manual, your samples, recording, the sound editor and the FM-1's screen mirror | phones and tablets too |
+| **[Emulator](https://philip-bos.github.io/echofield-fm1/emulator/)** | the whole firmware in your browser, on a drawn FM-1, with the factory sounds | no FM-1 needed |
+| **[Flasher](https://philip-bos.github.io/echofield-fm1/flasher/)** | installs and updates ECHOFIELD, puts the factory sounds on, or goes back to the stock firmware | computers only |
+| **[Companion](https://philip-bos.github.io/echofield-fm1/)** | the manual, your samples, recording, the sound editor and the FM-1's screen mirror | phones and tablets too |
 
 **To install:** open the flasher on a computer and plug in the FM-1 with a USB data cable. Press **Find the FM-1**, tick
 the three boxes and press **Install**. It takes about a minute, and the factory sounds go on afterwards.
@@ -175,7 +175,7 @@ What you need:
 - Node.js.
 
 ```bash
-git clone --recursive https://github.com/philipbos/echofield-fm1
+git clone --recursive https://github.com/Philip-Bos/echofield-fm1
 cd echofield-fm1
 python3 -m venv .venv && .venv/bin/pip install Pillow fonttools
 tools/run_tests.sh                          # every test; no FM-1 needed

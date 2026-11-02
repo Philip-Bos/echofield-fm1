@@ -16,6 +16,6 @@ mirror = true                   # the screen and panel on the computer (companio
 backup = true                   # presets and settings backed up over USB
 # the site (tools/make_site.py)
 tagline = "a granular sampler for the FM-1"
-repo = "https://github.com/philipbos/echofield-fm1"
+repo = "https://github.com/Philip-Bos/echofield-fm1"
 licence = "MIT"
 credits = "Built on fm1-base (Charles Vestal) and felucca-bsp (Leo Kuroshita, Hügelton Instruments), MPL-2.0."
