@@ -1,0 +1,233 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<!-- Copyright (c) 2026 Philip Bos -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ECHOFIELD Companion</title>
+<meta name="description" content="Samples, sound, screen and firmware for ECHOFIELD on the M-VAVE FM-1">
+<link rel="stylesheet" href="app.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23111'/%3E%3Ccircle cx='9' cy='11' r='4' fill='%233d8bff'/%3E%3Ccircle cx='23' cy='11' r='4' fill='%2330d07a'/%3E%3Ccircle cx='9' cy='22' r='4' fill='%23e6e6e6'/%3E%3Ccircle cx='23' cy='22' r='4' fill='%23ff7a1a'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="dots"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i></span>
+    <span class="name">ECHOFIELD</span><span class="sub">companion</span>
+  </div>
+  <div class="conn">
+    <a class="btn desktop-only" href="flasher/" title="Install or update the firmware (on a computer)">Firmware…</a>
+    <span id="status" class="pill off" role="status">not connected</span>
+    <button id="connect" type="button">Connect FM-1</button>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" data-tab="manual" aria-selected="true">Start here</button>
+  <button role="tab" data-tab="samples">Samples</button>
+  <button role="tab" data-tab="sound">Sound</button>
+  <button role="tab" data-tab="screen">Screen</button>
+  <a class="tablink" href="emulator/">Emulator ↗</a>
+</nav>
+
+<main>
+  <!-- ================================================================ SAMPLES -->
+  <section id="tab-samples" class="tab" role="tabpanel">
+    <div class="card">
+      <div class="row between">
+        <h2>Sample bank</h2>
+        <span id="bank-text" class="muted">connect the FM-1 to see its samples</span>
+      </div>
+      <div id="bank-map" class="bank-map" aria-label="flash sectors by sample"></div>
+      <ol id="slots" class="slots"></ol>
+    </div>
+
+    <div class="card" id="add-card">
+      <h2>Add a sound</h2>
+      <div class="addsrc">
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept="audio/*,.wav,.aif,.aiff,.mp3,.flac,.ogg,.m4a" hidden>
+          <span><b>Drop an audio file here</b> or click to choose one. WAV, AIFF, MP3, FLAC, OGG, M4A.</span>
+        </label>
+        <div class="recbox" id="rec-box">
+          <button type="button" id="rec-on" class="recstart"><b>● Record one</b><span>a microphone, an audio interface, or another FM-1 over USB</span></button>
+          <div id="rec-live" class="reclive" hidden>
+            <div class="row wrap gap">
+              <label>Input <select id="rec-in"></select></label>
+              <canvas id="rec-meter" class="meter" width="220" height="18" aria-label="input level"></canvas>
+            </div>
+            <div class="row wrap gap">
+              <button type="button" id="rec-go" class="big recbtn" aria-pressed="false">● REC</button>
+              <span id="rec-time" class="mono">0.0 s of 30</span>
+              <label class="chk"><input type="checkbox" id="rec-wait" checked> Start on sound</label>
+              <label class="chk" title="hear the input on this computer (use headphones: speakers can feed back into a microphone)"><input type="checkbox" id="rec-mon"> Monitor</label>
+              <button type="button" id="rec-off" class="ghost small">Close</button>
+            </div>
+            <p class="muted small">An FM-1 running Sloop (or the stock firmware) plugged into this computer is an audio input
+              too: pick it above. Up to 30 s; you trim it next.</p>
+          </div>
+        </div>
+      </div>
+      <div id="editor" hidden>
+        <canvas id="wave" class="screen wave" width="960" height="200" aria-label="waveform with start and end handles"></canvas>
+        <div class="row wrap gap">
+          <label>Name <input id="ed-name" maxlength="11" spellcheck="false"></label>
+          <label>Into slot <select id="ed-slot"></select></label>
+          <span id="ed-len" class="muted"></span>
+        </div>
+        <fieldset class="quality">
+          <legend>Quality (sample rate on the FM-1)</legend>
+          <div id="ed-rates" class="row wrap gap"></div>
+        </fieldset>
+        <div class="row wrap gap">
+          <label class="chk"><input type="checkbox" id="ed-norm" checked> Normalise</label>
+          <label class="chk"><input type="checkbox" id="ed-trim" checked> Trim silence</label>
+          <button type="button" id="ed-play-orig" class="ghost">▶ Original</button>
+          <button type="button" id="ed-play-fm1" class="ghost">▶ As on the FM-1</button>
+          <span id="ed-snr" class="muted"></span>
+        </div>
+        <div class="row gap">
+          <button type="button" id="ed-send" class="primary" disabled>Send to FM-1</button>
+          <button type="button" id="ed-cancel" class="ghost">Cancel</button>
+          <div class="progress" hidden id="ed-prog"><i></i></div>
+        </div>
+        <p id="ed-msg" class="msg" role="status"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h2>Factory sounds</h2><span id="fac-size" class="muted"></span></div>
+      <p class="muted">ECHOFIELD's own sounds, cut to fit. Install some, all or none: each one is an ordinary sample you can
+        overwrite or delete to make room.</p>
+      <div id="factory" class="factory"></div>
+      <div class="row gap">
+        <button type="button" id="fac-install" class="primary" disabled>Install selected</button>
+        <div class="progress" hidden id="fac-prog"><i></i></div>
+      </div>
+      <p id="fac-msg" class="msg" role="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>Backup</h2>
+      <p class="muted">Every sample, user preset and the current sound in one ZIP file (it opens anywhere: the samples are
+        inside as WAV too). Samples and presets stay on the FM-1 through ECHOFIELD updates; a backup matters before
+        installing another firmware.</p>
+      <div class="row wrap gap">
+        <button type="button" id="bk-save" disabled>Back up everything</button>
+        <label class="btn" id="bk-load-l">Restore a backup… <input type="file" id="bk-load" accept=".zip" hidden disabled></label>
+        <div class="progress" hidden id="bk-prog"><i></i></div>
+      </div>
+      <p id="bk-msg" class="msg" role="status"></p>
+    </div>
+  </section>
+
+  <!-- ================================================================ SOUND -->
+  <section id="tab-sound" class="tab sound" role="tabpanel" hidden>
+    <p id="snd-offline" class="note">Connect the FM-1 (top right) to play it from here. Everything below moves the FM-1's sound live,
+      and turning a knob on the FM-1 moves it here too.</p>
+
+    <!-- the stage: the sound itself -->
+    <div class="card stage">
+      <div class="stage-top">
+        <div>
+          <h2 id="stg-name">No sound yet</h2>
+          <div id="stg-meta" class="muted small"></div>
+        </div>
+        <div class="transport">
+          <button type="button" id="snd-play" class="big toggle" aria-pressed="false" title="The endless sound on / off (PLAY)">▶ PLAY</button>
+          <button type="button" id="snd-listen" class="big" title="Hear the sound as it is, START to END (EDIT on the SAMPLE page)">◉ LISTEN</button>
+          <button type="button" id="snd-freeze" class="big toggle freeze" aria-pressed="false" title="Everything holds still (SEQ)">❄ FREEZE</button>
+          <button type="button" id="snd-random" class="big" title="A new sound that still sounds good (ARP); locked knobs stay">⚄ RANDOM</button>
+          <button type="button" id="snd-undo" class="big ghost" title="Undo RANDOM (OCT- and OCT+ together)">↺</button>
+        </div>
+      </div>
+      <div class="wavebox">
+        <canvas id="stg-wave" class="screen" width="1200" height="220" aria-label="the sound: drag the green START, white END and orange POSITION"></canvas>
+        <div id="stg-loading" class="stg-loading" hidden>reading the sound from the FM-1…</div>
+      </div>
+      <div class="stage-hint muted small">Drag <b class="k2">START</b>, <b class="k3">END</b> and <b class="k4">POSITION</b> on the waveform.</div>
+      <div id="stg-chips" class="chips" role="radiogroup" aria-label="your 16 sounds"></div>
+    </div>
+
+    <!-- record the FM-1: its sound over USB, monitored and recorded here -->
+    <div class="card takes-card" id="tk-card">
+      <div class="row between wrap gap"><h2>Record the FM-1</h2>
+        <span class="muted small">its sound over USB · its level: MASTER, under GLO → SYSTEM → OUTPUT (80 % at first)</span></div>
+      <button type="button" id="tk-on" class="recstart"><b>● Hear and record the FM-1 here</b><span>the browser asks once to use audio inputs</span></button>
+      <div id="tk-live" class="row wrap gap" hidden>
+        <label>Input <select id="tk-in"></select></label>
+        <canvas id="tk-meter" class="meter" width="240" height="18" aria-label="the FM-1's level"></canvas>
+        <button type="button" id="tk-mon" class="big toggle" aria-pressed="false" title="hear the FM-1 through this computer (a little behind the FM-1's own headphones)">🎧 MONITOR</button>
+        <button type="button" id="tk-rec" class="big recbtn" aria-pressed="false">● REC</button>
+        <span id="tk-time" class="mono">00:00</span>
+        <button type="button" id="tk-off" class="ghost small">Close</button>
+      </div>
+      <ol id="tk-list" class="takes"></ol>
+      <div class="row wrap gap" id="tk-all" hidden>
+        <button type="button" id="tk-zip" class="ghost">⤓ All takes (ZIP)</button>
+        <span class="muted small">Takes stay until you close this page: download the ones you want to keep.</span>
+      </div>
+      <p id="tk-msg" class="msg" role="status"></p>
+    </div>
+
+    <!-- modes -->
+    <div class="card">
+      <div class="row between wrap gap"><h2>Mode</h2><span class="muted small">the ALGORITHM knob</span></div>
+      <div id="modes" class="modes" role="radiogroup" aria-label="mode"></div>
+    </div>
+
+    <!-- perform: the main controls, an XY pad, a keyboard -->
+    <div class="perform">
+      <div class="card">
+        <div class="row between wrap gap"><h2>Perform</h2><span class="muted small">the HOME button's two pages</span></div>
+        <div id="macros" class="macros"></div>
+      </div>
+      <div class="card xycard">
+        <div class="row between wrap gap"><h2>XY pad</h2>
+          <div class="row gap small"><label>X <select id="xy-x"></select></label><label>Y <select id="xy-y"></select></label></div></div>
+        <div id="xy" class="xy" tabindex="0" aria-label="XY pad: drag to change two controls at once"><i id="xy-dot"></i><span id="xy-read" class="mono small"></span></div>
+      </div>
+    </div>
+
+    <!-- every other page, grouped as the FM-1's buttons: the effects first -->
+    <div id="groups" class="groups"></div>
+
+    <div class="card">
+      <h2>Presets</h2>
+      <div class="presets">
+        <div><h3>Yours</h3><ol id="pre-user" class="plist"></ol></div>
+        <div><h3>Factory</h3><div id="pre-fac" class="chips"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ SCREEN -->
+  <section id="tab-screen" class="tab" role="tabpanel" hidden>
+    <div class="card screen-card">
+      <div class="row between wrap gap">
+        <h2>The FM-1's screen</h2>
+        <div class="row gap"><span id="mr-rate" class="muted mono"></span>
+          <label class="chk"><input type="checkbox" id="mr-control"> Play it from here</label>
+          <button type="button" id="mr-shot" class="ghost">Save PNG</button></div>
+      </div>
+      <div class="device">
+        <canvas id="mr-canvas" width="240" height="240" class="lcd" aria-label="the FM-1's screen, live"></canvas>
+        <div id="panel" class="panel" aria-label="the FM-1's panel"></div>
+      </div>
+      <p id="mr-msg" class="msg" role="status">Connect the FM-1: its screen shows here, pixel for pixel.</p>
+    </div>
+  </section>
+
+  <!-- ================================================================ MANUAL -->
+  <section id="tab-manual" class="tab" role="tabpanel" hidden>
+    <div class="prose manual" id="manual"></div>
+  </section>
+</main>
+
+<footer class="foot muted small">ECHOFIELD FM-1 · MIT · built on <a href="https://github.com/charlesvestal/fm1-base" target="_blank" rel="noopener">fm1-base</a>
+  and <a href="https://github.com/hugelton/felucca-bsp" target="_blank" rel="noopener">felucca-bsp</a> (MPL-2.0) · not affiliated with M-VAVE</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

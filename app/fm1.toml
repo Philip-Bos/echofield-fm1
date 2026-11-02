@@ -1,0 +1,21 @@
+# ECHOFIELD FM-1: build settings (fm1-base tools/build.py)
+name = "ECHOFIELD"
+id_prefix = "FM-1_47"           # package identity: dev builds FM-1_4700, releases FM-1_47XXYYZZ
+usb_manufacturer = "Philip Bos"
+usb_product = "ECHOFIELD FM-1"
+o2 = ["dsp/engine.c"]           # the sound engine at -O2, its own unit
+include = ["dsp"]
+gen = ["tools/gen_factory_h.py {gen}/factory_data.h"]   # the browser emulator's factory sounds (unused on the FM-1)
+words = "words.tsv"
+ble = false                     # no radio: the RAM is the sampler's
+usb_audio_in = true             # the FM-1 recordable over USB
+usb_audio_out = false           # (its RAM and CPU stay with the grains)
+cpu2 = true                     # the second core renders half the grains (dsp/engine.c ef_set_cpu2)
+cpu2_fallback = true            # a second core that fails is given up: one core until power-off, never a restart
+mirror = true                   # the screen and panel on the computer (companion app: Mirror)
+backup = true                   # presets and settings backed up over USB
+# the site (tools/make_site.py)
+tagline = "a granular sampler for the FM-1"
+repo = "https://github.com/philipbos/echofield-fm1"
+licence = "MIT"
+credits = "Built on fm1-base (Charles Vestal) and felucca-bsp (Leo Kuroshita, Hügelton Instruments), MPL-2.0."

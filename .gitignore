@@ -1,0 +1,11 @@
+# local environments and build output
+.venv/
+node_modules/
+__pycache__/
+app/build/
+dist/
+
+# written by the simulator on every test run
+docs/img/midi_out.txt
+
+.DS_Store

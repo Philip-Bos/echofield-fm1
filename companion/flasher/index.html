@@ -1,0 +1,119 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<!-- Copyright (c) 2026 Philip Bos -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ECHOFIELD Flasher</title>
+<meta name="description" content="Install or update ECHOFIELD on the M-VAVE FM-1, from a computer">
+<link rel="stylesheet" href="../app.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23111'/%3E%3Cpath d='M17 4 8 18h7l-2 10 11-15h-7z' fill='%23ff7a1a'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="dots"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i></span>
+    <span class="name">ECHOFIELD</span><span class="sub">flasher · computers only</span>
+  </div>
+  <div class="conn"><a class="btn" href="../">← Companion</a></div>
+</header>
+
+<main>
+  <section class="tab" id="refuse" hidden>
+    <div class="card">
+      <h2>Please use a computer</h2>
+      <p>Installing firmware is only allowed from a desktop or laptop computer (Chrome, Edge or Opera on Windows, macOS,
+        Linux or ChromeOS), with the FM-1 on a USB cable. Phones and tablets can sleep, switch apps or lose USB power
+        halfway through an install, so the flasher does not run on them.</p>
+      <p>Everything else — samples, sounds, presets, the screen, the emulator and the manual — works on this device in the
+        <a href="../">companion</a>.</p>
+    </div>
+  </section>
+
+  <section class="tab" id="app" hidden>
+    <div class="card">
+      <h2>Install ECHOFIELD</h2>
+      <div class="fw">
+        <div><b>ECHOFIELD</b> <span id="fw-ver" class="mono"></span></div>
+        <div class="muted mono" id="fw-sha"></div>
+        <label class="small">or another package: <input type="file" id="fw-file" accept=".fwsc"></label>
+      </div>
+      <ol class="checks" id="checks">
+        <li data-c="midi">Browser: Web MIDI with SysEx (Chrome, Edge, Opera)</li>
+        <li data-c="pkg">Package checked: identity, every part's checksum, SHA-256</li>
+        <li data-c="dev">FM-1 found: <span id="dev-id">—</span></li>
+        <li data-c="cable" class="manual"><label><input type="checkbox"> USB <b>data</b> cable straight into the computer, no hub</label></li>
+        <li data-c="apps" class="manual"><label><input type="checkbox"> No other app uses the FM-1 (M-UPGRADE, a DAW, the companion in another tab)</label></li>
+        <li data-c="keep" class="manual"><label><input type="checkbox"> I won't unplug or switch off until this page says <b>Done</b></label></li>
+      </ol>
+      <fieldset class="quality">
+        <legend>Sounds after installing (only if the FM-1 has no samples yet: yours are never touched)</legend>
+        <div class="row wrap gap">
+          <label class="chk"><input type="radio" name="snd" value="starter" checked> The 8 starter sounds (160 KB)</label>
+          <label class="chk"><input type="radio" name="snd" value="all"> All 14 factory sounds (268 KB)</label>
+          <label class="chk"><input type="radio" name="snd" value="none"> None</label>
+        </div>
+      </fieldset>
+      <p id="fw-backup" class="note"></p>
+      <div class="row gap wrap">
+        <button type="button" id="fw-check" class="ghost">Find the FM-1</button>
+        <button type="button" id="fw-install" class="primary" disabled>Install</button>
+        <button type="button" id="fw-resume" hidden>Resume the interrupted install</button>
+      </div>
+      <ol id="fw-steps" class="steps" hidden>
+        <li data-s="start">The FM-1 checks the package (nothing is written yet)</li>
+        <li data-s="loader">The update loader starts</li>
+        <li data-s="write">Writing the firmware <span class="pct"></span></li>
+        <li data-s="reboot">Restarting</li>
+        <li data-s="sounds">Putting the sounds on <span class="snd"></span></li>
+        <li data-s="done">Done</li>
+      </ol>
+      <div class="progress" hidden id="fw-prog"><i></i></div>
+      <p id="fw-msg" class="msg" role="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>How this keeps the FM-1 safe</h2>
+      <ul class="safe">
+        <li>The FM-1's own boot loader (the first 16 KB of its flash) is <b>never written</b>: its start-up and its built-in
+          update mode always stay intact.</li>
+        <li>The package is checked twice before anything is written: here (every checksum, the identity, SHA-256) and by
+          the FM-1 itself, which only stages the update after its own checks.</li>
+        <li>An install that is interrupted (cable out, power lost) leaves the FM-1 in its update loader: plug it back in and
+          press <b>Resume</b>.</li>
+        <li>If a firmware fails to start twice, the FM-1 opens <b>SAFE MODE</b> (no sound, USB on): this page installs from
+          there. After four failed starts it enters the chip's own update mode.</li>
+        <li>Your samples live outside the firmware's area: updating keeps them, and the sounds step only fills an empty bank.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Back to the stock firmware</h2>
+      <p class="muted">Download M-VAVE's FM-1 firmware (<a href="https://www.m-vave.com/download" target="_blank" rel="noopener">m-vave.com → Download</a>),
+        choose the file here, press <b>Find the FM-1</b>, tick the boxes, then install. Or use M-VAVE's own updater, M-UPGRADE.</p>
+      <div class="row gap wrap">
+        <input type="file" id="stock-file" accept=".fwsc">
+        <button type="button" id="stock-install" disabled>Install the stock firmware</button>
+      </div>
+      <p id="stock-msg" class="msg" role="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>If the FM-1 doesn't start at all</h2>
+      <ol class="small">
+        <li>Plug it in and press <b>Find the FM-1</b>. An FM-1 in SAFE MODE or in its update loader is found and can be
+          installed or resumed.</li>
+        <li>Still nothing: the chip's own update mode puts stock firmware back with no extra hardware, from a Mac or Linux:
+          <code>fm1_rescue.py</code> (see <code>docs/RECOVERY.md</code> in ECHOFIELD's source). It backs up the whole flash
+          first and never writes the boot area.</li>
+        <li>Last resort, with an RP2040 board: <a href="https://github.com/kurogedelic/FM-1-transporter" target="_blank" rel="noopener">FM-1-transporter</a>.</li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<footer class="foot muted small">ECHOFIELD FM-1 · MIT · the update path is fm1-base's and felucca-bsp's (MPL-2.0) · not affiliated with M-VAVE</footer>
+<script type="module" src="flasher.js"></script>
+</body>
+</html>

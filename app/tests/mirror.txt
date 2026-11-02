@@ -1,0 +1,17 @@
+# the screen mirrored over USB, at USB's real pace, against the screen itself (tests/mirror_test.mjs)
+mirror out:mirror.syx
+wait 800
+bankwrite 0 3 ALPHA
+tap PLAY
+wait 2000
+tap FX
+wait 500
+tap HOME
+turn K1 4
+wait 1500
+tap PLAY
+wait 3000
+mirror refresh
+wait 2500
+fbdump fb.raw
+mirror unplug

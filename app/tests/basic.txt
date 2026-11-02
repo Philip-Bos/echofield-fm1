@@ -1,0 +1,216 @@
+# ECHOFIELD FM-1 on the host simulator: the bank, the session, the panel, presets, RESAMPLE, the USB commands.
+#   tools/build.py app --host, then app/build/host/echofield_host app/tests/basic.txt OUTDIR
+# Parameter ids (dsp/ef_dsp.h): 1 TEXTURE, 2 SCATTER, 5 PITCH, 49 MODE.
+
+# ---- an empty FM-1: the seed plays, nothing else is there
+wait 1200
+expect slots_ok 0
+expect slot -1
+expect play 0
+expect free 92
+peakreset
+wait 1500
+expect peak_db_max -80
+tap PLAY
+expect play 1
+wait 2500
+peakreset
+wait 1000
+expect peak_db_min -30
+expect peak_db_max 0
+
+# ---- samples into the bank: the seed gives way, the sectors are counted
+bankwrite 0 3 ALPHA
+expect slots_ok 1
+expect slot 0
+expect free 83
+bankwrite 1 2 BETA
+expect slots_ok 2
+expect free 77
+expect slot 0
+press EDIT
+wait 40
+key w1 down
+wait 40
+key w1 up
+wait 40
+release EDIT
+wait 300
+expect slot 1
+peakreset
+wait 1500
+expect peak_db_min -30
+
+# ---- the session: saved once the sound has stopped, back after a reboot
+tap PLAY
+expect play 0
+wait 6000
+expect dirty 0
+reboot
+wait 1200
+expect slots_ok 2
+expect slot 1
+expect play 0
+
+# ---- a damaged sample is found at boot and never played
+bankbreak 1
+reboot
+wait 1200
+expect state1 2
+expect slots_ok 1
+expect slot 0
+bankerase 1
+expect state1 0
+expect free 83
+
+# ---- knobs, locks, RANDOM, undo
+expect page 0
+expect pq1 47185
+turn K1 5
+expect pq1 50462
+press ARP
+turn K1 1
+release ARP
+expect locked1 1
+expect pq1 50462
+tap ARP
+wait 100
+expect pq1 50462
+press ARP
+turn K1 1
+release ARP
+expect locked1 0
+press OCT-
+tap OCT+
+release OCT-
+expect pq1 50462
+turn ALGO 1
+expect mode 1
+turn ALGO -1
+expect mode 0
+
+# ---- LISTEN: the sample as it is, on the SAMPLE page (EDIT), and EDIT + a held white key
+tap EDIT
+wait 200
+expect page 12
+expect listen 0
+tap EDIT
+wait 300
+expect listen 1
+expect page 12
+peakreset
+wait 300
+expect peak_db_min -40
+tap EDIT
+wait 300
+expect listen 0
+press EDIT
+wait 40
+key w0 down
+wait 300
+expect listen 1
+key w0 up
+wait 100
+expect listen 0
+release EDIT
+wait 100
+tap HOME
+wait 100
+expect page 0
+
+# ---- the keys: a note while held, silence after its release
+expect play 0
+key w5 down 100
+wait 100
+expect nnotes 1
+peakreset
+wait 1500
+expect peak_db_min -30
+key w5 up
+wait 100
+expect nnotes 0
+wait 9000
+peakreset
+wait 500
+expect peak_db_max -60
+tap OCT+
+expect octave 1
+tap OCT-
+expect octave 0
+
+# ---- performance effects: while FX and the black key are held
+press FX
+wait 40
+key b4 down
+wait 50
+expect punch 16
+key b4 up
+wait 50
+expect punch 0
+release FX
+expect page 0
+
+# ---- presets: store into U01, back after a reboot, load
+tap SAVE
+expect page 13
+tap SAVE
+wait 100
+expect user_used 1
+turn K1 1
+turn K1 -1
+turn K1 5
+tap SAVE
+wait 100
+expect user_used 2
+reboot
+wait 1200
+expect user_used 2
+
+# ---- RESAMPLE: two seconds of the output become a sample
+tap HOME
+tap PLAY
+wait 1500
+tap REC
+expect rec 1
+wait 2000
+tap REC
+wait 200
+expect rec 0
+expect slots_ok 2
+expect slot 1
+peakreset
+wait 1500
+expect peak_db_min -30
+
+# ---- the companion app's commands (replies are not seen here; their effects are)
+usbcmd 010080 76
+expect pq1 32768
+usbcmd F00000 76
+expect play 0
+usbcmd F00100 76
+expect play 1
+usbcmd 01 73
+expect slots_ok 1
+expect state1 0
+usbcmd 00 70
+usbcmd 00 71
+usbcmd 00 75
+usbcmd 00 77
+usbcmd 0000000000100 79
+
+# ---- a full bank says so, and nothing half-written is left
+bankwrite 2 25 BIG
+expect slots_ok 2
+bankwrite 3 10 TOOBIG
+expect slots_ok 2
+expect state3 0
+
+# ---- WIPE: everything out, the seed plays again
+usbcmd 57495045 7A
+expect slots_ok 0
+expect slot -1
+expect free 92
+wait 1500
+peakreset
+wait 1000
+expect peak_db_min -30
