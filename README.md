@@ -9,7 +9,8 @@
   <a href="https://philip-bos.github.io/echofield-fm1/emulator/"><b>Try it in your browser</b></a> ·
   <a href="https://philip-bos.github.io/echofield-fm1/flasher/"><b>Install it</b></a> ·
   <a href="https://philip-bos.github.io/echofield-fm1/"><b>Companion app</b></a> ·
-  <a href="#watch-it">Watch it</a>
+  <a href="#watch-it">Watch it</a> ·
+  <a href="https://discord.gg/nAQmDwytU"><b>Questions? Join the Discord</b></a>
 </p>
 
 <p align="center">
@@ -223,6 +224,12 @@ ECHOFIELD stands on other people's work:
 - **The FM-1's font:** [Barlow](https://github.com/jpt/barlow) by Jeremy Tribby, SIL OFL 1.1, via fm1-base.
 
 ECHOFIELD itself, its engine, the companion and the factory sounds are by **Philip Bos**.
+
+## Questions and ideas
+
+Got a question, found a bug, or made something with ECHOFIELD? Come and say hi on the
+**[Discord](https://discord.gg/nAQmDwytU)**. Bugs can also go in this repository's
+[issues](https://github.com/Philip-Bos/echofield-fm1/issues).
 
 ## Licence
 
