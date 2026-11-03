@@ -17,6 +17,6 @@ jobs:
       id-token: write          # the signing certificate
       attestations: write      # the attestation
     with:
-      # fm1-base comes in as a submodule (the checkout leaves submodules out)
-      build: git submodule update --init base && python3 base/tools/build.py app --release "${GITHUB_REF_NAME#v}"
+      # fm1-base comes in as a submodule, felucca-bsp as its own (the checkout leaves submodules out)
+      build: git submodule update --init --recursive base && python3 base/tools/build.py app --release "${GITHUB_REF_NAME#v}"
       packages: app/build/echofield-*.fwsc
