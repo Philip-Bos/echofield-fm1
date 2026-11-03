@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.8
+
+- A package identity of its own: **FM-1_3246…** ("ECHO" on a phone keypad), so the Firmware Hub and the update tools can
+  tell ECHOFIELD apart. Up to 0.2.7 it was FM-1_47…, a prefix FRASIL already uses. Nothing else changes: presets,
+  settings and samples stay, and the flasher still recognises an FM-1 running an older ECHOFIELD.
+- Releases are built and signed on GitHub from the tagged source (fm1-build), and listed on the Firmware Hub.
+
 ## 0.2.7
 
 - No more crackle on the headphone output at high volume. The FM-1's headphone amplifier, loaded by headphones, breaks

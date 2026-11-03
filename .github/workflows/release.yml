@@ -1,0 +1,22 @@
+# A release: push a tag (git tag v0.2.8 && git push origin v0.2.8) and GitHub builds the firmware package from that
+# tag with the Firmware Hub's shared workflow (zvenson/fm1-build: JieLi's toolchain and SDK, nothing else), signs a
+# build attestation for it and publishes it as the tag's release. The hub lists it within three hours with
+# "Built from source on GitHub". Don't add or replace the .fwsc on the release by hand: the hub compares SHA-256s.
+# (tools/release.sh is still the local build: tests, emulator, the companion's copy of the package.)
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    uses: zvenson/fm1-build/.github/workflows/build.yml@v1
+    permissions:
+      contents: write          # the release
+      id-token: write          # the signing certificate
+      attestations: write      # the attestation
+    with:
+      # fm1-base comes in as a submodule (the checkout leaves submodules out)
+      build: git submodule update --init base && python3 base/tools/build.py app --release "${GITHUB_REF_NAME#v}"
+      packages: app/build/echofield-*.fwsc

@@ -12,6 +12,13 @@ Before: note the stock firmware version (M-UPGRADE shows it) and have its packag
       ECHOFIELD splash, then the PLAY page with SEED at the bottom left.
 - [ ] Install again over ECHOFIELD (an update): Done, and nothing it kept is lost.
 - [ ] Unplug halfway through a write, plug back in: Find says "update loader", **Resume** finishes.
+- [ ] The Firmware Hub's checks, on the release package (the one GitHub built and signed):
+  - [ ] From the stock V15: installs, starts, and the FM-1 answers with ECHOFIELD's identity (FM-1_3246…).
+  - [ ] From another firmware (Sloop, say): installs and starts.
+  - [ ] Leaving it: another firmware installs over ECHOFIELD (from the hub or its own page), and so does the stock
+        firmware.
+  - [ ] Over an older ECHOFIELD (0.2.7 answers FM-1_47000207): the flasher still names it ECHOFIELD and updates it,
+        and the presets, settings and samples stay.
 
 ## 2. Sound and load
 

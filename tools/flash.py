@@ -8,6 +8,7 @@ identity), matches the release's SHA-256 (companion/firmware/manifest.json, or -
 Then the factory sounds go onto an FM-1 whose bank is empty (tools/efsounds.py).        (needs: pip install mido python-rtmidi)"""
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -20,7 +21,7 @@ want = sys.argv[sys.argv.index("--sha") + 1] if "--sha" in sys.argv else (man["s
 d = pkg.read_bytes()
 blocks = [d[i * 0x30 + 0x2F] for i in range(20)]
 product = "".join(chr((m - i - 1) & 0xFF) for i, m in enumerate(blocks) if m != 0x7D)
-if not product.startswith("FM-1_47"):
+if not re.fullmatch(r"FM-1_(3246\d*|4700(\d{4})?)", product):        # (FM-1_4700… up to 0.2.7)
     sys.exit(f"{pkg.name} is {product}, not ECHOFIELD: nothing done")
 sha = hashlib.sha256(d).hexdigest()
 if want and sha != want.lower():

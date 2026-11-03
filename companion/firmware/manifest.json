@@ -1,8 +1,8 @@
 {
  "name": "ECHOFIELD",
- "version": "0.2.7",
- "file": "echofield-0.2.7.fwsc",
- "product": "FM-1_47000207",
- "sha256": "4d18833c7d38665bc641bf7e4102e2da217ef8b4a18bf4ff55a99e5521554c96",
+ "version": "0.2.8",
+ "file": "echofield-0.2.8.fwsc",
+ "product": "FM-1_3246000208",
+ "sha256": "dbd60d767f130aeadbc887fa8e53e2a329de8c394bfde33ce1c1dc6649ffa0e6",
  "size": 611496
 }

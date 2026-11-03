@@ -73,6 +73,9 @@ Installing goes through the same path as the other FM-1 firmwares built on fm1-b
   mode.
 - **Phones and tablets can't install,** because an install there is too easy to interrupt.
 - **Going back is one page away:** the stock firmware is on the same page, and M-VAVE's own M-UPGRADE works too.
+- **Other firmwares install straight over it,** from [The Firmware Hub](https://thefirmwarehub.com) or their own
+  pages: the package carries felucca-bsp's update loader. ECHOFIELD keeps its own sample bank and does not read other
+  firmwares' projects or samples (bring sounds in as audio files through the companion).
 
 If anything goes wrong, see [docs/RECOVERY.md](docs/RECOVERY.md).
 
@@ -182,7 +185,7 @@ python3 -m venv .venv && .venv/bin/pip install Pillow fonttools
 tools/run_tests.sh                          # every test; no FM-1 needed
 python3 base/tools/build.py app             # the firmware: app/build/echofield.fwsc
 python3 base/tools/build.py app --host      # the app in fm1-base's FM-1 simulator
-tools/release.sh 0.2.7                      # tests, release build, emulator, the companion's package, dist/
+tools/release.sh 0.2.8                      # tests, release build, emulator, the companion's package, dist/
 ```
 
 The tests cover:
