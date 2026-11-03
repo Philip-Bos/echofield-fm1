@@ -1,6 +1,6 @@
 {
   "what": "A granular sampler: a few seconds of any sound become slow clouds, sparkles, tape loops and swells, played from the keys and knobs. 14 factory sounds, your own samples (or recorded over USB), filter, delay, reverb and tape, and a companion web app for samples, presets and recording.",
-  "author": "Philip Bos",
+  "author": "PhilipsKnobs",
   "kinds": ["synth"],
   "play": "https://philip-bos.github.io/echofield-fm1/emulator/",
   "editor": "https://philip-bos.github.io/echofield-fm1/",
