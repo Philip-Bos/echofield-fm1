@@ -130,6 +130,8 @@ static float spawn_wait, scan, walk_pos, walk_pitch, walk_v1, walk_v2, walk_size
 static float lfo1, lfo2_cur, lfo2_tgt, lfo2_t;
 static float tape_head, tape_speed = 1.0f, tape_stop;
 static int tape_k, stutter_left, pulse_step, pulse_rot;
+static int pulse_last = -1;                /* the PULSE step that fired last */
+static uint32_t ext_seq_seen;
 static float stutter_pos, pulse_acc, step_pos[16];
 static int step_oct[16];
 static oracle_t orc;
@@ -982,7 +984,31 @@ static void schedule(const ctl_t *c, uint32_t n)
         }
     }
     if (c->clocked) {
-        float bpm = 30.0f + 90.0f * sm[P_MOTION], step_samples = (float)EF_SR * 60.0f / bpm / 4.0f;
+        float bpm = 30.0f + 90.0f * sm[P_MOTION], ext = ctl.ext_bpm, step_samples;
+        int spb = 4;                     /* steps a quarter note */
+        if (ext > 0.0f) {
+            /* on a MIDI clock: its 1/16, 1/8 or 1/4, whichever is nearest ECHOFIELD's own pace */
+            float own = bpm, best = 1e9f;
+            int d;
+            for (d = 1; d <= 4; d <<= 1) {
+                float r = ext / (float)d, e = r > own ? r / own : own / r;
+                if (e < best) {
+                    best = e;
+                    bpm = r;
+                    spb = 4 / d;
+                }
+            }
+        }
+        step_samples = (float)EF_SR * 60.0f / bpm / 4.0f;
+        if (ext > 0.0f && ctl.ext_beat_seq != ext_seq_seen) {
+            /* a quarter note of the clock: back onto its grid (unless that step has just played, a hair early) */
+            int target = (int)((ctl.ext_beat * (uint32_t)spb) & 15u);
+            ext_seq_seen = ctl.ext_beat_seq;
+            if (!(pulse_last == target && pulse_acc > step_samples * 0.5f)) {
+                pulse_step = target;
+                pulse_acc = 0.0f;
+            }
+        }
         int k = (int)clampf(5.0f + sm[P_DENS_MUL] * 2.5f + 0.5f, 1.0f, 16.0f);
         uint16_t pat;
         if (orc.on && orc.bloom > 0.0f)
@@ -997,6 +1023,7 @@ static void schedule(const ctl_t *c, uint32_t n)
             pulse_acc -= 1.0f;
             if (pulse_acc <= 0.0f) {
                 int st = pulse_step;
+                pulse_last = st;
                 pulse_acc += step_samples * (1.0f + ((pulse_step & 1) ? 0.08f : -0.08f) * sm[P_DRIFT]);
                 pulse_step = (pulse_step + 1) & 15;
                 meter.pulse_step = (uint8_t)st;
@@ -1554,6 +1581,25 @@ static void listen(uint32_t n)   /* (the region as set, not smoothed: LISTEN is 
         meter.aud = (uint8_t)clampf((float)(aud.pos >> Q) / (float)src->frames * 254.0f + 1.0f, 1.0f, 255.0f);
 }
 
+/* the delay time on a MIDI clock: the note value nearest the knob's time, folded into the delay's 20..1000 ms */
+static float dly_on_clock(float ms, float bpm)
+{
+    static const float BEATS[] = {0.25f, 1.0f / 3.0f, 0.5f, 2.0f / 3.0f, 0.75f, 1.0f, 1.5f, 2.0f};
+    float beat = 60000.0f / bpm, best = ms, err = 1e9f;
+    uint32_t k;
+    for (k = 0; k < sizeof BEATS / sizeof BEATS[0]; k++) {
+        float t = beat * BEATS[k], e;
+        if (t < 20.0f || t > 1000.0f)
+            continue;
+        e = t > ms ? t / ms : ms / t;
+        if (e < err) {
+            err = e;
+            best = t;
+        }
+    }
+    return best;
+}
+
 void ef_render(int32_t *lr, uint32_t n, float gain)
 {
     static const float SMOOTH_A = 0.0352f;   /* 1 - exp(-SUB / (0.04 s * 44100)) */
@@ -1574,6 +1620,8 @@ void ef_render(int32_t *lr, uint32_t n, float gain)
                         ? t
                         : smooth_to(sm[i], t, SMOOTH_A);
         }
+        if (ctl.ext_bpm > 0.0f)
+            sm[P_DLY_TIME] = dly_on_clock(sm[P_DLY_TIME], ctl.ext_bpm);
         /* a new source: fade out, swap, fade in */
         if (src_pending) {
             if (!src || fade_gain <= 0.0f) {

@@ -709,6 +709,59 @@ static void midi_note_out(int on, uint32_t note, uint32_t vel)
         plat_midi_out(0x08u | (0x80u | ch) << 8 | note << 16);
 }
 
+/* ================================================================ MIDI clock in
+ * 24 PPQN clock, START, CONTINUE and STOP from a host (FM-1 Relay, a DAW, another FM-1's sequencer). START and STOP
+ * play and stop the endless sound; the tempo, measured a quarter note at a time, puts PULSE and the delay on the
+ * clock's grid (engine.c). Half a second without a clock and ECHOFIELD keeps its own time again. The quarter note is
+ * timed in device milliseconds (plat_ms: 0.2 % at 120 BPM, smoothed), which every host keeps as the FM-1 does;
+ * plat_ticks24 is the computer's own clock in a host, which runs the device in bursts. */
+static struct {
+    uint32_t ticks, beat_t, last_ms;
+    float bpm;
+} clk;
+
+static void clock_in(uint32_t st)
+{
+    ef_ctl_t *c = ef_ctl();
+    uint32_t now = plat_ms();
+    if (st == 0xF8u) {
+        clk.last_ms = now;
+        if (clk.ticks % 24u == 0u) {
+            if (clk.beat_t) {
+                float ms = (float)(now - clk.beat_t), b = ms > 0.0f ? 60000.0f / ms : 0.0f;
+                if (b >= 20.0f && b <= 320.0f) {
+                    if (!clk.bpm)
+                        app_say("MIDI CLOCK", "FOLLOWING");
+                    clk.bpm = clk.bpm ? clk.bpm + (b - clk.bpm) * 0.35f : b;
+                    c->ext_bpm = clk.bpm;
+                }
+            }
+            clk.beat_t = now ? now : 1u;    /* (0: no quarter note timed yet) */
+            c->ext_beat = clk.ticks / 24u;
+            c->ext_beat_seq++;
+        }
+        clk.ticks++;
+    } else if (st == 0xFAu) {        /* START: from the top */
+        clk.ticks = 0;
+        clk.beat_t = 0;
+        play_set(1);
+    } else if (st == 0xFBu) {        /* CONTINUE */
+        play_set(1);
+    } else if (st == 0xFCu) {        /* STOP */
+        play_set(0);
+    }
+}
+
+static void clock_check(void)
+{
+    if (clk.bpm && plat_ms() - clk.last_ms > 500u) {
+        clk.bpm = 0.0f;
+        clk.ticks = 0;
+        clk.beat_t = 0;
+        ef_ctl()->ext_bpm = 0.0f;
+    }
+}
+
 /* ================================================================ MIDI in */
 static void midi_in(void)
 {
@@ -717,6 +770,10 @@ static void midi_in(void)
     int changed = 0;
     while (plat_midi_in(&pkt, &port)) {
         uint32_t st = (pkt >> 8) & 0xFFu, d1 = (pkt >> 16) & 0x7Fu, d2 = (pkt >> 24) & 0x7Fu, ty = st & 0xF0u, ch = st & 15u;
+        if (st >= 0xF8u) {
+            clock_in(st);
+            continue;
+        }
         if (st < 0x80u || st >= 0xF0u)
             continue;
         if (set.midi_ch && ch != set.midi_ch - 1u)
@@ -759,6 +816,7 @@ static void midi_in(void)
     }
     if (changed)
         notes_push();
+    clock_check();
 }
 
 /* ================================================================ messages */
@@ -2100,6 +2158,33 @@ int app_host_cmd(const char *cmd, const char *a, const char *b, const char *c, c
         dir_changed();
         return 1;
     }
+    if (!strcmp(cmd, "slotwav")) {       /* slotwav SLOT FILE: the sample as the engine hears it, a 16-bit WAV */
+        uint32_t sl = (uint32_t)atoi(a) % BANK_SLOTS, fr = dir.slot[sl].frames, i, k = 0, n;
+        int16_t blk[EF_BLK_SAMPLES];
+        FILE *f = fopen(b, "wb");
+        uint32_t hd[11] = {0, 36u + fr * 2u, 0, 0, 16u, 0, dir.slot[sl].rate, dir.slot[sl].rate * 2u, 0, 0, fr * 2u};
+        if (!f || !dir.slot[sl].used)
+            return printf("  slotwav %s: nothing\n", a), 1;
+        memcpy(&hd[0], "RIFF", 4);       /* (the simulator runs on a little-endian machine) */
+        memcpy(&hd[2], "WAVEfmt ", 8);
+        hd[5] = 1u | 1u << 16;           /* PCM, mono */
+        hd[8] = 2u | 16u << 16;          /* 2 bytes a frame, 16 bits */
+        memcpy(&hd[9], "data", 4);
+        fwrite(hd, 4, 11, f);
+        for (i = 0; i < BANK_NSEC && k < fr; i++)
+            if (map_bit(dir.slot[sl].map, i)) {
+                const uint8_t *p = plat_data(sec_addr(i));
+                uint32_t bl;
+                for (bl = 0; bl < EF_SEC_BLOCKS && k < fr; bl++) {
+                    ef_ima_block(p + bl * EF_BLK_BYTES, blk);
+                    n = fr - k < EF_BLK_SAMPLES ? fr - k : EF_BLK_SAMPLES;
+                    fwrite(blk, 2, n, f);
+                    k += n;
+                }
+            }
+        fclose(f);
+        return 1;
+    }
     if (!strcmp(cmd, "bankerase")) {
         printf("  bankerase %s: %d\n", a, bank_erase((uint32_t)atoi(a)));
         dir_changed();
@@ -2184,6 +2269,12 @@ int app_expect(const char *what, int *got)
         *got = ef_ctl()->shed;
     else if (!strcmp(what, "listen"))
         *got = ef_listening();
+    else if (!strcmp(what, "ext_bpm"))   /* the MIDI clock's tempo, rounded (0: ECHOFIELD's own time) */
+        *got = (int)(ef_ctl()->ext_bpm + 0.5f);
+    else if (!strcmp(what, "ext_beat"))
+        *got = (int)ef_ctl()->ext_beat;
+    else if (!strncmp(what, "frames", 6))   /* framesN: slot N's length */
+        *got = (int)dir.slot[atoi(what + 6) % BANK_SLOTS].frames;
     else
         return 0;
     return 1;

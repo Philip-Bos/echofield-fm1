@@ -78,6 +78,11 @@ typedef struct {
     volatile uint8_t vel[EF_MAX_NOTES];
     volatile uint8_t nnotes;
     volatile uint32_t note_seq;          /* bumped at every new note: a burst of grains */
+    /* MIDI clock (24 PPQN) from a host, set by the main loop: ext_bpm 0 = ECHOFIELD keeps its own time. While it runs,
+     * PULSE steps on the clock's grid and the delay time snaps to the nearest note value. */
+    volatile float ext_bpm;
+    volatile uint32_t ext_beat_seq;      /* bumped on every quarter note of the clock, and at START */
+    volatile uint32_t ext_beat;          /* quarter notes since START */
     volatile uint32_t dbg_bypass;        /* diagnostics: effect sections skipped (bit 0 tape, 1 filter, 2 delay+reverb) */
 } ef_ctl_t;
 

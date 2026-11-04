@@ -1,0 +1,41 @@
+# MIDI clock in (app.c clock_in): START and STOP play and stop, the tempo is measured a quarter note at a time and
+# followed, half a second without a clock gives ECHOFIELD its own time back. Any channel: system real-time.
+#   app/build/host/echofield_host app/tests/clock.txt OUTDIR
+wait 1200
+expect play 0
+expect ext_bpm 0
+
+# ---- START, then a clock at 119 BPM (21 ms a tick): playing, following, counting quarter notes
+midi FA 00 00
+expect play 1
+clock 96 21
+expect ext_bpm >116
+expect ext_bpm <122
+expect ext_beat 3
+expect peak_db_max 0
+
+# ---- faster (125 BPM, 20 ms a tick): it follows
+clock 192 20
+expect ext_bpm >122
+expect ext_bpm <128
+
+# ---- STOP: the sound stops; the clock still runs, so the tempo stays
+midi FC 00 00
+expect play 0
+clock 48 20
+expect ext_bpm >122
+
+# ---- CONTINUE plays again; then the clock stops: its own time after half a second
+midi FB 00 00
+expect play 1
+wait 700
+expect ext_bpm 0
+
+# ---- a MIDI channel set (SYSTEM: MIDI CH 5): the clock is still followed
+tap GLO
+turn K2 5
+tap HOME
+midi FA 00 00
+clock 96 21
+expect ext_bpm >116
+expect play 1

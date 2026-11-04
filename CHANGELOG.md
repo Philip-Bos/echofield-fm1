@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.9
+
+- **Follows MIDI clock.** START and STOP from a host (FM-1 Relay, a DAW, another FM-1) play and stop the endless
+  sound, so ECHOFIELD starts and stops with the rest of a rig. While a 24 PPQN clock comes in, **PULSE** steps on the
+  clock's grid (its 1/16, 1/8 or 1/4, whichever is nearest the pace EVOLVE sets) and is put back on the beat every
+  quarter note, and the **delay** time snaps to the note value nearest the TIME knob (1/16 to 1/2, triplets and dotted
+  included). Half a second without a clock and ECHOFIELD keeps its own time again. Nothing to set: any channel works.
+
 ## 0.2.8
 
 - A package identity of its own: **FM-1_3246…** ("ECHO" on a phone keypad), so the Firmware Hub and the update tools can

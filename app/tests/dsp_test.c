@@ -371,6 +371,24 @@ int main(int argc, char **argv)
         fclose(wav);
     }
     printf("worst %.0f ns/frame on this host (%.1f%% of real time)\n", worst, worst / (1e9 / EF_SR) * 100);
+    /* MIDI clock: PULSE steps on the clock's grid, re-aligned every quarter note */
+    {
+        int b, off = 0;
+        defaults(c);
+        c->play = 1;
+        c->p[P_MODE] = (float)MODE_PULSE;
+        c->ext_bpm = 120.0f;             /* own pace at MOTION 0.35 is ~61 BPM: the clock's 1/8 (2 steps a beat) */
+        for (b = 0; b < 8; b++) {
+            c->ext_beat = (uint32_t)b;
+            c->ext_beat_seq++;
+            run(0.004f);
+            if (ef_meter()->pulse_step != (uint8_t)((b * 2) & 15))
+                off++;
+            run(0.496f);
+        }
+        CHECK(!off, "PULSE off the clock's grid on %d of 8 beats", off);
+        c->ext_bpm = 0.0f;
+    }
     printf(fails ? "dsp_test: %d FAILED\n" : "dsp_test: all passed\n", fails);
     return fails != 0;
 }

@@ -19,6 +19,9 @@
   <img src="docs/img/14-pulse.png" width="240" alt="PULSE mode">
 </p>
 
+> **New in 0.2.9: follows MIDI clock.** START and STOP from a DAW or another FM-1 start and stop ECHOFIELD, and PULSE
+> and the delay lock to the clock's tempo. Every change is in the [changelog](CHANGELOG.md).
+
 ---
 
 ## What it is
