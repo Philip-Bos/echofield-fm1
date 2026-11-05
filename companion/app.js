@@ -114,7 +114,7 @@ addEventListener("hashchange", () => tab(location.hash.slice(1).replace(/[^a-z]/
 
 // the flasher is for computers only: its link is not shown on phones and tablets
 import("./flasher/flasher.js").then((f) => { if (f.isMobile()) for (const e of document.querySelectorAll(".desktop-only")) e.hidden = true; });
-samples.init();
+samples.init({ app, $, el, msg, progress, download });
 sound.init();
 takes.init();
 screen.init();

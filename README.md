@@ -56,7 +56,7 @@ talk to the FM-1 over USB (Web MIDI).
 
 | | | |
 | --- | --- | --- |
-| **[Emulator](https://philip-bos.github.io/echofield-fm1/emulator/)** | the whole firmware in your browser, on a drawn FM-1, with the factory sounds | no FM-1 needed |
+| **[Emulator](https://philip-bos.github.io/echofield-fm1/emulator/)** | the whole firmware in your browser, on a drawn FM-1, with all 14 factory sounds and the sample editor under it: load your own sounds and play them | no FM-1 needed |
 | **[Flasher](https://philip-bos.github.io/echofield-fm1/flasher/)** | installs and updates ECHOFIELD, puts the factory sounds on, or goes back to the stock firmware | computers only |
 | **[Companion](https://philip-bos.github.io/echofield-fm1/)** | the manual, your samples, recording, the sound editor and the FM-1's screen mirror | phones and tablets too |
 

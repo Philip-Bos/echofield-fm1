@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased (the web emulator; the FM-1's firmware is unchanged)
+
+- The emulator has the companion's **sample editor** under the panel: drop in or record a sound, trim it, pick a
+  quality, hear it as the FM-1 will play it and put it in a slot; listen to, export, rename and delete samples, and put
+  factory sounds back. The samples stay in the browser until **Factory reset**.
+- The emulator always starts with **all 14 factory sounds**. Before, a second visit could find them all DAMAGED (the
+  page kept the bank's directory but not the samples) and the bank stayed empty.
+
 ## 0.2.9
 
 - **Follows MIDI clock.** START and STOP from a host (FM-1 Relay, a DAW, another FM-1) play and stop the endless

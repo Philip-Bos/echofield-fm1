@@ -50,6 +50,7 @@ void app_usb_cmd(const uint8_t *d, uint32_t n);
 #define APP_SPLASH
 void app_splash(void);
 
+#define APP_WEB                          /* the emulator page's sample editor (web.c) */
 #define APP_HOST_EXPECT                  /* the host simulator's checks (the tests directory) */
 int app_expect(const char *what, int *got);
 #define APP_HOST_CMD

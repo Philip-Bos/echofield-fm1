@@ -85,6 +85,63 @@ a { color: var(--accent); }
 .help p, .help ul { margin: 0; max-width: 60ch; }
 .help ul { padding-left: 1.1rem; }
 kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); border: 1px solid var(--rule); border-radius: 4px; padding: 0 .3em; color: var(--ink); }
+/* ---- the sample editor under the panel (app.js: the companion's Samples, ../samples.js): the companion's rules, in
+   this page's colours */
+#samples { --bg: var(--ground); --line: var(--rule); --screen: #000; --k1: #3d8bff; --k2: #30d07a; --k3: #9a9aa2;
+           --k4: #ff7a1a; --rec: #ff3c3c; --radius: 14px; margin: 1.4rem 0 0; display: grid; gap: 1rem; }
+#samples h2 { font: 600 1.1rem "Barlow Semi Condensed", "Barlow", sans-serif; margin: 0; }
+#samples [hidden] { display: none !important; }
+#samples .card { background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 1rem 1.2rem; min-width: 0; }
+#samples .muted { color: var(--muted); } #samples .small { font-size: .85rem; }
+#samples .row { display: flex; align-items: center; } #samples .between { justify-content: space-between; }
+#samples .wrap { flex-wrap: wrap; } #samples .gap { gap: 10px; }
+#samples button, #samples .btn, #samples select, #samples input:not([type]) { font: inherit; color: var(--ink);
+  background: var(--card); border: 1px solid var(--muted); border-radius: 8px; padding: .3em .8em; min-height: 2.2em; }
+#samples button { cursor: pointer; } #samples button:disabled { opacity: .5; cursor: default; }
+#samples button.primary { background: var(--accent); border-color: var(--accent); color: var(--ground); font-weight: 600; }
+#samples button.ghost { background: transparent; }
+#samples .msg { min-height: 1.2em; margin: 10px 0 0; font-size: .92rem; }
+#samples .msg.err { color: var(--bad); } #samples .msg.ok { color: var(--teal); }
+#samples .bank-map { display: grid; grid-template-columns: repeat(46, 1fr); gap: 2px; margin: 8px 0 14px; }
+#samples .bank-map i { aspect-ratio: 1; border-radius: 2px; background: var(--rule); display: block; }
+#samples .slots { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+#samples .slots li { display: grid; grid-template-columns: 30px 14px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  padding: 6px 10px; border-radius: 10px; background: var(--ground); }
+#samples .slots .num { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+#samples .slots .sw { width: 12px; height: 12px; border-radius: 3px; }
+#samples .slots .nm { font-weight: 600; letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#samples .slots .meta { color: var(--muted); font-size: 12px; font-weight: 400; margin-left: 8px; }
+#samples .slots .acts { display: flex; gap: 4px; } #samples .slots .acts button { padding: 4px 9px; font-size: 13px; min-height: 0; }
+#samples .slots li.empty .nm { color: var(--muted); font-weight: 400; }
+#samples .slots li.current { outline: 2px solid var(--k4); }
+#samples .badge { font-size: 10px; letter-spacing: .08em; padding: 2px 6px; border-radius: 6px; background: var(--rule); margin-left: 6px; vertical-align: 1px; }
+#samples .badge.bad { background: var(--rec); color: #fff; }
+#samples .addsrc { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: .6rem; }
+@media (max-width: 700px) { #samples .addsrc { grid-template-columns: 1fr; } }
+#samples .drop { display: flex; align-items: center; justify-content: center; border: 2px dashed var(--rule); border-radius: 12px; padding: 22px; text-align: center; cursor: pointer; }
+#samples .drop.over { border-color: var(--k1); }
+#samples .recstart { display: grid; gap: 4px; width: 100%; text-align: left; padding: 18px 20px; border: 2px dashed var(--rule); border-radius: 12px; background: transparent; }
+#samples .recstart b { color: var(--rec); } #samples .recstart span { color: var(--muted); font-size: 13px; }
+#samples .reclive { display: grid; gap: 10px; border: 2px solid var(--rule); border-radius: 12px; padding: 12px 14px; }
+#samples .reclive p { margin: 0; }
+#samples .meter { width: 220px; height: 18px; border-radius: 4px; background: var(--ground); }
+#samples .screen { background: var(--screen); border-radius: 10px; display: block; width: 100%; }
+#samples .wave { height: 160px; margin: 12px 0; cursor: ew-resize; touch-action: none; }
+#samples #editor { display: grid; gap: 12px; }
+#samples #editor label { font-size: .92rem; display: flex; gap: 8px; align-items: center; }
+#samples .quality { border: 1px solid var(--rule); border-radius: 10px; padding: 8px 12px 12px; }
+#samples .quality legend { font-size: 12px; color: var(--muted); padding: 0 6px; }
+#samples .rate { border: 1px solid var(--rule); border-radius: 10px; padding: 8px 12px; cursor: pointer; display: grid !important; gap: 2px !important; min-width: 120px; }
+#samples .rate input { display: none; }
+#samples .rate:has(input:checked) { border-color: var(--ink); background: var(--ground); }
+#samples .rate b { font-size: 14px; } #samples .rate span { font-size: 12px; color: var(--muted); } #samples .rate.nofit span { color: var(--bad); }
+#samples .progress { flex: 1; height: 8px; border-radius: 4px; background: var(--rule); overflow: hidden; min-width: 120px; }
+#samples .progress i { display: block; height: 100%; width: 0; background: var(--k4); transition: width .15s; }
+#samples .factory { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; margin: 8px 0 12px; }
+#samples .factory label { display: flex; gap: 8px; align-items: center; background: var(--ground); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+#samples .factory .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+#samples .factory .there { color: var(--teal); font-size: 12px; margin-left: auto; }
+#samples .mono { font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -117,6 +174,84 @@ kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); b
   <button id="reset" type="button" aria-describedby="reset-why">Factory reset</button>
   <span id="reset-why" class="sr">Forget what was saved and start again from the factory settings</span>
 </div>
+
+<section id="samples" aria-labelledby="samples-h">
+  <div class="card">
+    <div class="row between wrap gap">
+      <h2 id="samples-h">Sample bank</h2>
+      <span id="bank-text" class="muted">switch the FM-1 on to see its samples</span>
+    </div>
+    <p id="emu-off" class="muted small">The same editor as the companion's Samples page, on this emulated FM-1: load your own
+      sounds, trim them and hear them in ECHOFIELD. They stay in this browser until Factory reset.</p>
+    <div id="samples-body" hidden>
+      <div id="bank-map" class="bank-map" aria-label="flash sectors by sample"></div>
+      <ol id="slots" class="slots"></ol>
+    </div>
+  </div>
+
+  <div class="card" id="add-card">
+    <h2>Add a sound</h2>
+    <div class="addsrc">
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept="audio/*,.wav,.aif,.aiff,.mp3,.flac,.ogg,.m4a" hidden>
+        <span><b>Drop an audio file here</b> or click to choose one. WAV, AIFF, MP3, FLAC, OGG, M4A.</span>
+      </label>
+      <div class="recbox" id="rec-box">
+        <button type="button" id="rec-on" class="recstart"><b>● Record one</b><span>a microphone or an audio interface</span></button>
+        <div id="rec-live" class="reclive" hidden>
+          <div class="row wrap gap">
+            <label>Input <select id="rec-in"></select></label>
+            <canvas id="rec-meter" class="meter" width="220" height="18" aria-label="input level"></canvas>
+          </div>
+          <div class="row wrap gap">
+            <button type="button" id="rec-go" class="big recbtn" aria-pressed="false">● REC</button>
+            <span id="rec-time" class="mono">0.0 s of 30</span>
+            <label class="chk"><input type="checkbox" id="rec-wait" checked> Start on sound</label>
+            <label class="chk" title="hear the input on this computer (use headphones: speakers can feed back into a microphone)"><input type="checkbox" id="rec-mon"> Monitor</label>
+            <button type="button" id="rec-off" class="ghost small">Close</button>
+          </div>
+          <p class="muted small">Up to 30 s; you trim it next.</p>
+        </div>
+      </div>
+    </div>
+    <div id="editor" hidden>
+      <canvas id="wave" class="screen wave" width="960" height="200" aria-label="waveform with start and end handles"></canvas>
+      <div class="row wrap gap">
+        <label>Name <input id="ed-name" maxlength="11" spellcheck="false"></label>
+        <label>Into slot <select id="ed-slot"></select></label>
+        <span id="ed-len" class="muted"></span>
+      </div>
+      <fieldset class="quality">
+        <legend>Quality (sample rate on the FM-1)</legend>
+        <div id="ed-rates" class="row wrap gap"></div>
+      </fieldset>
+      <div class="row wrap gap">
+        <label class="chk"><input type="checkbox" id="ed-norm" checked> Normalise</label>
+        <label class="chk"><input type="checkbox" id="ed-trim" checked> Trim silence</label>
+        <button type="button" id="ed-play-orig" class="ghost">▶ Original</button>
+        <button type="button" id="ed-play-fm1" class="ghost">▶ As on the FM-1</button>
+        <span id="ed-snr" class="muted"></span>
+      </div>
+      <div class="row gap">
+        <button type="button" id="ed-send" class="primary" disabled>Put it in the emulator</button>
+        <button type="button" id="ed-cancel" class="ghost">Cancel</button>
+        <div class="progress" hidden id="ed-prog"><i></i></div>
+      </div>
+      <p id="ed-msg" class="msg" role="status"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row between wrap gap"><h2>Factory sounds</h2><span id="fac-size" class="muted"></span></div>
+    <p class="muted">ECHOFIELD's own sounds. All 14 are in the bank to begin with; put back any you deleted.</p>
+    <div id="factory" class="factory"></div>
+    <div class="row gap">
+      <button type="button" id="fac-install" class="primary" disabled>Install selected</button>
+      <div class="progress" hidden id="fac-prog"><i></i></div>
+    </div>
+    <p id="fac-msg" class="msg" role="status"></p>
+  </div>
+</section>
 
 <details class="speak" id="speak">
   <summary><h2>Screen Reader</h2></summary>
@@ -719,7 +854,7 @@ $("mute").addEventListener("click", () => {
 });
 $("reset").addEventListener("click", () => {
   if ($("reset").dataset.armed) {
-    try { localStorage.removeItem(STORE_KEY); } catch {}
+    try { localStorage.removeItem(STORE_KEY); localStorage.removeItem("echofield-emu-bank"); } catch {}   /* (and the samples app.js keeps) */
     location.reload();
   } else {
     $("reset").dataset.armed = "1";

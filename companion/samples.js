@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Philip Bos
 // SAMPLES: the bank, a new sound (trim, quality, a preview of exactly what the FM-1 will play), the factory sounds,
-// backup and restore.
-import { app, $, el, msg, progress, download } from "./app.js";
+// backup and restore. Used by the companion (on an FM-1 over USB) and by the emulator's page (on the emulated one):
+// each gives init() its app (app.ef: the bank's commands, efproto.js EchoField's) and its page helpers.
 import { prepare, decode, parseWav, wav16, crc32, slotName, sectorsFor, RATES, SEC_PAYLOAD, MIN_FRAMES } from "./lib/efcodec.js";
 import { zip, unzip } from "./lib/zip.js";
 import { PARAMS } from "./lib/efparams.js";
 import { kb, secs } from "./lib/fmt.js";
 import { AudioIn, listInputs, isFm1, why, drawMeter } from "./lib/audioin.js";
 
+let app, $, el, msg, progress, download;
 const NSEC = 92;
 const SLOT_COL = ["#3d8bff", "#30d07a", "#9a9aa2", "#ff7a1a", "#7fb2ff", "#7fe3ab", "#c8c8cc", "#ffaa6b",
                   "#2a5fb0", "#1f8f53", "#6a6a72", "#b4520f", "#a879ff", "#ff4d5e", "#e0c341", "#3fc6c6"];
@@ -300,7 +301,7 @@ async function send() {
 
 // ---------------------------------------------------------------- factory sounds
 async function loadFactory() {
-  try { factory = await (await fetch("factory/factory.json")).json(); } catch { factory = { sounds: [] }; }
+  try { factory = await (await fetch(new URL("./factory/factory.json", import.meta.url))).json(); } catch { factory = { sounds: [] }; }
   const box = $("factory");
   box.replaceChildren();
   for (const s of factory.sounds) {
@@ -334,7 +335,7 @@ async function installFactory() {
       const free = dir.find((d) => d.state === "empty");
       if (!free) throw new Error("no free slot left");
       msg("fac-msg", `${s.name} (${++i} of ${todo.length})…`);
-      const pay = new Uint8Array(await (await fetch("factory/" + s.file)).arrayBuffer());
+      const pay = new Uint8Array(await (await fetch(new URL("./factory/" + s.file, import.meta.url))).arrayBuffer());
       if (crc32(pay) !== s.crc) throw new Error(`${s.file} is damaged (download the companion again)`);
       await app.ef.upload(free.slot, pay, { frames: s.frames, rate: s.rate, name: s.name, factory: true, crc: s.crc },
         (b, t) => progress("fac-prog", (i - 1 + b / t) / todo.length));
@@ -400,7 +401,8 @@ async function restore(file) {
 }
 
 // ---------------------------------------------------------------- wiring
-export function init() {
+export function init(ctx) {
+  ({ app, $, el, msg, progress, download } = ctx);
   recInit();
   const drop = $("drop"), file = $("file");
   file.addEventListener("change", () => file.files[0] && loadFile(file.files[0]));
@@ -418,10 +420,14 @@ export function init() {
   $("ed-send").addEventListener("click", send);
   $("ed-cancel").addEventListener("click", () => { ed.src = null; $("editor").hidden = true; playing?.stop(); });
   $("fac-install").addEventListener("click", installFactory);
-  $("bk-save").addEventListener("click", backup);
-  $("bk-load").addEventListener("change", (e) => e.target.files[0] && restore(e.target.files[0]));
-  app.on("connected", () => { $("bk-save").disabled = false; $("bk-load").disabled = false; refresh(); });
-  app.on("disconnected", () => { dir = null; app.dir = null; $("bk-save").disabled = $("bk-load").disabled = true; render(); });
+  const bk = $("bk-save");                 // (backup and restore: the companion's; the emulator's page has none)
+  if (bk) {
+    bk.addEventListener("click", backup);
+    $("bk-load").addEventListener("change", (e) => e.target.files[0] && restore(e.target.files[0]));
+  }
+  const bkOn = (on) => { if (bk) { bk.disabled = !on; $("bk-load").disabled = !on; } };
+  app.on("connected", () => { bkOn(true); refresh(); });
+  app.on("disconnected", () => { dir = null; app.dir = null; bkOn(false); render(); });
   app.on("refresh-bank", refresh);
   // right after a fresh install (Flash): the starter sounds, as if they came with the firmware
   app.on("install-starter", async () => {
