@@ -81,14 +81,21 @@ class FM1:
         return None
 
     def upload(self, slot, pay, s):
+        """a sample into a slot. The FM-1 holds one incoming frame: the UPLOAD goes again if no read request follows
+        (it was lost while the FM-1 still had the last one), and the next command waits until it answers again"""
         name = list(s["name"].encode()[:11]) + [0] * (12 - len(s["name"][:11]))
-        self.send(0x72, [slot, 1, s["rate"] & 255, s["rate"] >> 8, *s["frames"].to_bytes(4, "little"),
-                         *s["crc"].to_bytes(4, "little"), *name])
-        last = time.time()
+        head = [slot, 1, s["rate"] & 255, s["rate"] >> 8, *s["frames"].to_bytes(4, "little"), *s["crc"].to_bytes(4, "little"),
+                *name]
+        self.send(0x72, head)
+        last, asked, again = time.time(), False, 0
         while time.time() - last < 15:
-            u = self.recv(1.0)
+            u = self.recv(0.25)
+            if not asked and time.time() - last > 1.5 and again < 3:
+                self.send(0x72, head)    # (no request yet: nothing written, the UPLOAD went unseen)
+                last, again = time.time(), again + 1
             if not u or u[2] != 0x30:
                 continue
+            asked = True
             last = time.time()
             addr = int.from_bytes(bytes(u[7:11]), "little")
             ln = u[11] | u[12] << 8
@@ -99,6 +106,7 @@ class FM1:
             bd.append((~sum(bd[6:])) & 255)
             self.o.send(mido.Message("sysex", data=pack7(bd)))
             if top == 0xC0000000:
+                self.ask(0x70, [], 1.0)  # (the FM-1 back at its main loop, its last frame taken)
                 return
             if top == 0xCF000000:
                 raise SystemExit(f"{s['name']}: the FM-1 refused it (code {addr & 0xFFFF})")

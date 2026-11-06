@@ -1,7 +1,23 @@
 # Changelog
 
-## Unreleased (the web emulator; the FM-1's firmware is unchanged)
+## 0.2.10
 
+- **Newer FM-1s save again.** FM-1s sold since the autumn (mostly from AliExpress) have a UC25HQ80 flash chip (JEDEC
+  B36014) instead of the Puya P25Q80 (856014). ECHOFIELD only knew the Puya, so on those units it could not save
+  presets, settings or samples, nor back up. It now takes both.
+- **Found by M-UPGRADE 3.11 again.** M-VAVE's updater (3.11, 3 November) refuses an identity with more than three
+  digits, so a plain identity request now gets FM-1_324 and the whole identity (FM-1_3246…) goes to installers that
+  ask for it, as the flasher, tools/flash.py and the Firmware Hub do. The flasher already takes the fast install of
+  firmwares whose update loader offers it.
+- **Sounds go on reliably.** Putting several samples on in a row (the flasher's sounds step, tools/efsounds.py, the
+  companion) could lose about one in nine ("stopped asking for data"): the FM-1 holds one incoming frame, and the
+  next sample's request could arrive while it still had the last. The computer now sends a request again when the
+  FM-1 did not take it, and waits for it before the next.
+- Built on fm1-base of 5 November 2026 (35a0348, felucca-bsp 41a6e86), thanks to everyone who contributed to them.
+  firmware.json describes ECHOFIELD for firmware hubs. fm1-base's newer update of felucca-bsp (its fast install, the
+  SysEx input queue, the flash gate) waits: with it, the FM-1 refused the installers' package check every time on
+  hardware, so nothing could be installed over it.
+- The browser emulator plays in tune in browsers that run audio at 48 kHz (fm1-base's resampling).
 - The emulator has the companion's **sample editor** under the panel: drop in or record a sound, trim it, pick a
   quality, hear it as the FM-1 will play it and put it in a slot; listen to, export, rename and delete samples, and put
   factory sounds back. The samples stay in the browser until **Factory reset**.

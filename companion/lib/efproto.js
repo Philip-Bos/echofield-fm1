@@ -220,10 +220,11 @@ export class EchoField {
   upload(slot, payload, meta, onProgress) { return this.link.exclusive(() => this.uploadNow(slot, payload, meta, onProgress)); }
   async uploadNow(slot, payload, { frames, rate, name, factory = false, crc }, onProgress) {
     const link = this.link;
-    let last = Date.now(), done = null, sent = 0;
+    let last = Date.now(), done = null, sent = 0, asked = false;
     const finish = new Promise((resolve) => { done = resolve; });
     link.reqFns = (r) => {
       last = Date.now();
+      asked = true;
       const top = (r.addr & 0xFF000000) >>> 0;
       if (top === UP_OK || top === UP_FAIL) {
         link.send(readResponse(r.addr, [...new TextEncoder().encode("success"), 0], r.fl));
@@ -236,16 +237,22 @@ export class EchoField {
       onProgress?.(sent, payload.length);
     };
     try {
-      link.send(frame(CMD.UPLOAD, [slot, factory ? 1 : 0, ...le16(rate), ...le32(frames), ...le32(crc >>> 0), ...name12(name)]));
+      // the FM-1 holds one incoming frame: an UPLOAD it never saw (it still had the last one) is sent again while no read
+      // request has come (nothing is written before the first); the next command waits until it answers again
+      const head = frame(CMD.UPLOAD, [slot, factory ? 1 : 0, ...le16(rate), ...le32(frames), ...le32(crc >>> 0), ...name12(name)]);
+      link.send(head);
+      const t0 = Date.now();
+      let again = 0;                       // (asked: a read request came)
       const timer = (async () => {
         for (;;) {
-          await sleep(500);
+          await sleep(250);
           if (link.lost) return -2;
+          if (!asked && again < 3 && Date.now() - t0 > 1500 * (again + 1)) { again++; link.send(head); }
           if (Date.now() - last > 15000) return -3;
         }
       })();
       const rc = await Promise.race([finish, timer]);
-      if (rc === 0) return;
+      if (rc === 0) { await this.link.askNow(CMD.HELLO, [], { ms: 1000, tries: 2 }); return; }
       if (rc === -1) throw new Error("the FM-1 asked for data outside the sample (stopped)");
       if (rc === -2) throw new Error("the FM-1 was disconnected");
       if (rc === -3) throw new Error("the FM-1 stopped asking for data");

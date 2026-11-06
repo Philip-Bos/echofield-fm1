@@ -131,7 +131,15 @@ function ready() {
 
 const ORDER = ["start", "loader", "write", "reboot", "sounds", "done"];
 const STEP = { start: "start", verify: "start", loader: "loader", write: "write", reboot: "reboot", sounds: "sounds", done: "done" };
-function stepUi(name, b, total) {
+// an install's steps (fm1ota.js Updater: name, then its numbers). "mode" says which install the loader takes: the fast
+// one (only the sectors that changed, with its own percentage) or the classic one (every byte, counted here)
+let fastMode = false;
+function stepUi(name, b, total, pct) {
+  if (name === "mode") {
+    fastMode = b === "fast";
+    $("fw-steps").querySelector(".pct").textContent = fastMode ? "(fast: only what changed)" : "";
+    return;
+  }
   const s = STEP[name];
   if (!s) return;
   $("fw-steps").hidden = false;
@@ -139,9 +147,10 @@ function stepUi(name, b, total) {
     const i = ORDER.indexOf(li.dataset.s), j = ORDER.indexOf(s);
     li.className = i < j ? "done" : i === j ? (s === "done" ? "done" : "now") : "";
   }
-  if (name === "write" && total) {
-    $("fw-steps").querySelector(".pct").textContent = `${Math.round(Math.min(1, b / total) * 100)} %`;
-    progress(b / total);
+  if (name === "write" && (pct != null || total)) {
+    const f = pct != null ? pct / 100 : Math.min(1, b / total);
+    $("fw-steps").querySelector(".pct").textContent = `${Math.round(f * 100)} %${fastMode ? " (fast)" : ""}`;
+    progress(f);
   }
 }
 
@@ -154,6 +163,7 @@ const ERR = {
   noreturn: "The firmware is written, but the FM-1 did not come back. Switch it off and on.",
   mismatch: "The FM-1 restarted with a different firmware than expected. Press Find the FM-1 to see what it runs.",
   badreq: "The FM-1 asked for data outside the package. Nothing more was sent: try again.",
+  foreign: "The FM-1 is waiting in the update mode of M-VAVE's own firmware. Finish that update with M-UPGRADE first, or install M-VAVE's firmware below.",
 };
 
 async function guard(fn) {
@@ -210,7 +220,7 @@ async function install(p, label) {
     msg("fw-msg", `Installing ${label}. Keep the cable in until this says Done.`);
     try {
       const total = p.image.length;
-      const got = await updater.install(p.image, p.product, (name, n, b) => stepUi(name, b, total), p.sha);
+      const got = await updater.install(p.image, p.product, (name, n, b, pct) => stepUi(name, name === "mode" ? n : b, total, pct), p.sha);
       progress(null);
       dev = { text: got, model: "FM-1" };
       check("dev", true, got);
@@ -243,7 +253,7 @@ async function resume() {
   await guard(async () => {
     msg("fw-msg", "Resuming…");
     try {
-      const ok = await updater.resume(pkg.image, (name, n, b) => stepUi(name, b, pkg.image.length), pkg.product);
+      const ok = await updater.resume(pkg.image, (name, n, b, pct) => stepUi(name, name === "mode" ? n : b, pkg.image.length, pct), pkg.product);
       progress(null);
       if (ok) { msg("fw-msg", "Done.", "ok"); $("fw-resume").hidden = true; stepUi("done"); }
       else msg("fw-msg", "No update loader found. Press Find the FM-1.", "err");

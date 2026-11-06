@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "id": "echofield",
+  "name": "ECHOFIELD",
+  "author": "PhilipsKnobs",
+  "license": "MIT",
+  "tagline": "a granular sampler for the FM-1",
+  "description": "ECHOFIELD turns the FM-1 into a granular sampler: a few seconds of any sound become slow clouds, sparkles, tape loops and swells, played from the keys and knobs. Six modes, performance effects under the black keys, RANDOM with locks, RESAMPLE, the DRIFT ORACLE, MIDI clock, 14 factory sounds and 16 slots for your own, loaded or recorded with the companion web app.",
+  "tags": ["sampler", "ambient", "experimental"],
+  "install": "https://philip-bos.github.io/echofield-fm1/flasher/",
+  "site": "https://philip-bos.github.io/echofield-fm1/",
+  "source": "https://github.com/Philip-Bos/echofield-fm1",
+  "screenshot": "docs/card.png",
+  "hardware": {
+    "models": ["FM-1"],
+    "flash": ["856014", "B36014"],
+    "features": ["usb-audio-in", "second-core", "velocity", "pressure", "screen-reader", "screen-mirror", "backup"]
+  },
+  "credits": "Built on fm1-base (Charles Vestal) and felucca-bsp (Leo Kuroshita, Hügelton Instruments), MPL-2.0."
+}

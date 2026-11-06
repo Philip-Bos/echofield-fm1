@@ -73,7 +73,7 @@ static void put_hex(const uint8_t *p, uint32_t n)
     printf("\n");
     fflush(stdout);
 }
-void plat_sysex_send(const uint8_t *frame, uint32_t n) { put_hex(frame, n); }
+int plat_sysex_send(const uint8_t *frame, uint32_t n) { put_hex(frame, n); return 0; }
 
 static uint32_t unpk7(const uint8_t *in, uint32_t n, uint8_t *out)
 {

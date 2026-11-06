@@ -15,8 +15,15 @@ cpu2 = true                     # the second core renders half the grains (dsp/e
 cpu2_fallback = true            # a second core that fails is given up: one core until power-off, never a restart
 mirror = true                   # the screen and panel on the computer (companion app: Mirror)
 backup = true                   # presets and settings backed up over USB
-# the site (tools/make_site.py)
+# the site (tools/make_site.py) and firmware.json for firmware hubs (fm1-base docs/FIRMWARE-JSON.md)
+title = "ECHOFIELD"
+author = "PhilipsKnobs"
 tagline = "a granular sampler for the FM-1"
+description = "ECHOFIELD turns the FM-1 into a granular sampler: a few seconds of any sound become slow clouds, sparkles, tape loops and swells, played from the keys and knobs. Six modes, performance effects under the black keys, RANDOM with locks, RESAMPLE, the DRIFT ORACLE, MIDI clock, 14 factory sounds and 16 slots for your own, loaded or recorded with the companion web app."
+tags = ["sampler", "ambient", "experimental"]
+install = "https://philip-bos.github.io/echofield-fm1/flasher/"
+site = "https://philip-bos.github.io/echofield-fm1/"
+screenshot = "docs/card.png"
 repo = "https://github.com/Philip-Bos/echofield-fm1"
 licence = "MIT"
 credits = "Built on fm1-base (Charles Vestal) and felucca-bsp (Leo Kuroshita, Hügelton Instruments), MPL-2.0."
