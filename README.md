@@ -237,6 +237,11 @@ Got a question, found a bug, or made something with ECHOFIELD? Come and say hi o
 **[Discord](https://discord.gg/nAQmDwytU)**. Bugs can also go in this repository's
 [issues](https://github.com/Philip-Bos/echofield-fm1/issues).
 
+## Support
+
+ECHOFIELD is free and stays free. If you enjoy it and want to support its development, you can
+**[buy me a coffee on Ko-fi](https://ko-fi.com/philipsknobs)** ☕
+
 ## Licence
 
 ECHOFIELD and its companion are **MIT** ([LICENSE](LICENSE)). The factory sounds are **CC0**. fm1-base and felucca-bsp
