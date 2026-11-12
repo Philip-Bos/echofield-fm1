@@ -13,7 +13,7 @@ Before: note the stock firmware version (M-UPGRADE shows it) and have its packag
 - [ ] Install again over ECHOFIELD (an update): Done, and nothing it kept is lost.
 - [ ] Unplug halfway through a write, plug back in: Find says "update loader", **Resume** finishes.
 - [ ] The Firmware Hub's checks, on the release package (the one GitHub built and signed):
-  - [ ] From the stock V15: installs, starts, and the FM-1 answers with ECHOFIELD's identity (FM-1_3246…).
+  - [ ] From the stock V15: installs, starts, and the FM-1 answers with ECHOFIELD's identity (FM-1_324).
   - [ ] From another firmware (Sloop, say): installs and starts.
   - [ ] Leaving it: another firmware installs over ECHOFIELD (from the hub or its own page), and so does the stock
         firmware.

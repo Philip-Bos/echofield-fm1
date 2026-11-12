@@ -11,8 +11,9 @@ import { EfLink, EchoField, midiTransport } from "../lib/efproto.js";
 import { crc32 } from "../lib/efcodec.js";
 
 const $ = (id) => document.getElementById(id);
-// ECHOFIELD: FM-1_3246…, and FM-1_4700… up to 0.2.7 (FM-1_47 is FRASIL's prefix, so only ECHOFIELD's own numbers)
-const OURS = /^FM-1_(3246\d*|4700(\d{4})?)$/, STOCK = /^FM-1_0\d\d$/;
+// ECHOFIELD: FM-1_324, FM-1_3246… from 0.2.8 to 0.2.10, and FM-1_4700… up to 0.2.7 (FM-1_47 is FRASIL's prefix,
+// so only ECHOFIELD's own numbers)
+const OURS = /^FM-1_(324(6\d*)?|4700(\d{4})?)$/, STOCK = /^FM-1_0\d\d$/;
 let pkg = null, stock = null, dev = null, busy = false, updater = null, access = null;
 
 // ---------------------------------------------------------------- computers only

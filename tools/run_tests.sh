@@ -43,10 +43,11 @@ node app/tests/css_test.mjs | tail -1
 echo "== recording in the companion (headless Chrome, its fake audio input)"
 CHROME=${CHROME:-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"}
 if [ -x "$CHROME" ]; then
-  python3 companion/serve.py 8748 --no-open > /dev/null 2>&1 &
+  PORT=${COMPANION_PORT:-8748}                                  # (another port: COMPANION_PORT=…)
+  python3 companion/serve.py $PORT --no-open > /dev/null 2>&1 &
   SRV=$!
   sleep 1
-  if COMPANION=http://localhost:8748/ node --experimental-websocket --no-warnings app/tests/recording_test.mjs > $B/test/recording.txt 2>&1; then
+  if COMPANION=http://localhost:$PORT/ node --experimental-websocket --no-warnings app/tests/recording_test.mjs > $B/test/recording.txt 2>&1; then
     tail -1 $B/test/recording.txt; kill $SRV
   else
     grep -E "FAIL|Error" $B/test/recording.txt; kill $SRV; exit 1
@@ -56,7 +57,7 @@ else
 fi
 
 echo "== the app in the host simulator"
-python3 base/tools/build.py app --host | tail -1
+python3 tools/build.py app --host | tail -1
 $B/host/echofield_host app/tests/basic.txt $B/test | tail -1 | grep -v FAILED || { $B/host/echofield_host app/tests/basic.txt $B/test | grep FAIL; exit 1; }
 
 echo "== MIDI clock in"

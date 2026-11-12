@@ -21,7 +21,7 @@ want = sys.argv[sys.argv.index("--sha") + 1] if "--sha" in sys.argv else (man["s
 d = pkg.read_bytes()
 blocks = [d[i * 0x30 + 0x2F] for i in range(20)]
 product = "".join(chr((m - i - 1) & 0xFF) for i, m in enumerate(blocks) if m != 0x7D)
-if not re.fullmatch(r"FM-1_(3246\d*|4700(\d{4})?)", product):        # (FM-1_4700… up to 0.2.7)
+if not re.fullmatch(r"FM-1_(324(6\d*)?|4700(\d{4})?)", product):        # (FM-1_3246… 0.2.8-0.2.10, FM-1_4700… up to 0.2.7)
     sys.exit(f"{pkg.name} is {product}, not ECHOFIELD: nothing done")
 sha = hashlib.sha256(d).hexdigest()
 if want and sha != want.lower():

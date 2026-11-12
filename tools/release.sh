@@ -12,12 +12,14 @@ cd "$(dirname "$0")/.."
 export JIELI_TOOLCHAIN=${JIELI_TOOLCHAIN:-$HOME/.jieli/toolchain} AC79_SDK=${AC79_SDK:-$HOME/fw-AC79_AIoT_SDK}
 tools/run_tests.sh
 python3 tools/gen_efparams.py --check
-python3 base/tools/build.py app --release "$V" | grep -E "^  ok|^  FAIL|ERROR|^package"
-python3 base/tools/build.py app --web | grep -E "^emu|error"          # the emulator: the same firmware in WebAssembly
+python3 tools/build.py app --release "$V" | grep -E "^  ok|^  FAIL|ERROR|^package"
+python3 tools/build.py app --web | grep -E "^emu|error"          # the emulator: the same firmware in WebAssembly
 mkdir -p companion/emulator
 rm -rf companion/emulator/parts companion/emulator/app_own*.js         # (the build's emulator as it is: its parts too)
 cp app/build/emu/index.html app/build/emu/worklet.js app/build/emu/app.wasm app/build/emu/app*.js companion/emulator/
 cp -R app/build/emu/parts companion/emulator/
+mkdir -p companion/words                                       # the screen reader's words (the FM-1 asks the site
+cp app/web/words/*.json companion/words/                       # for its own build's file): older ones stay
 PKG=app/build/echofield-$V.fwsc
 [ -f "$PKG" ] || PKG=$(ls -t app/build/echofield-*.fwsc | head -1)
 rm -f companion/firmware/*.fwsc

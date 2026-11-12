@@ -186,9 +186,9 @@ git clone --recursive https://github.com/Philip-Bos/echofield-fm1
 cd echofield-fm1
 python3 -m venv .venv && .venv/bin/pip install Pillow fonttools
 tools/run_tests.sh                          # every test; no FM-1 needed
-python3 base/tools/build.py app             # the firmware: app/build/echofield.fwsc
-python3 base/tools/build.py app --host      # the app in fm1-base's FM-1 simulator
-tools/release.sh 0.2.10                     # tests, release build, emulator, the companion's package, dist/
+python3 tools/build.py app                  # the firmware: app/build/echofield.fwsc
+python3 tools/build.py app --host           # the app in fm1-base's FM-1 simulator
+tools/release.sh 0.2.11                     # tests, release build, emulator, the companion's package, dist/
 ```
 
 The tests cover:

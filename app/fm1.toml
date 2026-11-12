@@ -1,7 +1,7 @@
 # ECHOFIELD FM-1: build settings (fm1-base tools/build.py)
 name = "ECHOFIELD"
-id_prefix = "FM-1_3246"         # package identity ("ECHO" on a phone keypad): dev builds FM-1_324600, releases
-                                # FM-1_3246XXYYZZ. Up to 0.2.7 it was FM-1_47, which FRASIL had already taken.
+id_prefix = "FM-1_324"          # package identity: tools/build.py fixes it at FM-1_324, dev builds and releases alike
+                                # (why: there). FM-1_3246XXYYZZ from 0.2.8 to 0.2.10; FM-1_4700… up to 0.2.7.
 usb_manufacturer = "Philip Bos"
 usb_product = "ECHOFIELD FM-1"
 o2 = ["dsp/engine.c"]           # the sound engine at -O2, its own unit

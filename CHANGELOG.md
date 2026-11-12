@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.11
+
+- **Installs from The Firmware Hub finish cleanly.** ECHOFIELD's identity is now **FM-1_324**, the same to every
+  installer. Before, a plain identity request got FM-1_324 and only installers that asked for more got the whole
+  FM-1_3246…, so the hub's installer wrote ECHOFIELD and then reported "mismatch: installed, but the device reports
+  FM-1_324". The version is still in the package's name and on the FM-1's own screen.
+
 ## 0.2.10
 
 - **Newer FM-1s save again.** FM-1s sold since the autumn (mostly from AliExpress) have a UC25HQ80 flash chip (JEDEC
