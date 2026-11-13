@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Philip Bos
 // ECHOFIELD companion: the connection, the tabs, and what the pages share.
 import { EfLink, EchoField, midiTransport } from "./lib/efproto.js";
-import { pairs, usualName } from "./vendor/fm1-base/fm1ports.js";
+import { findEchofield } from "./lib/efports.js";
 import * as samples from "./samples.js";
 import * as sound from "./sound.js";
 import * as takes from "./takes.js";
@@ -65,29 +65,30 @@ function lost() {
   app.emit("disconnected");
 }
 
-// find the FM-1 running ECHOFIELD: a port with an FM-1's name (or ECHOFIELD's) that answers ECHOFIELD's HELLO
+// find the FM-1 running ECHOFIELD: a port that answers ECHOFIELD's HELLO (lib/efports.js: by name first, then any
+// port an FM-1 answers on)
 export async function connect(quiet = false) {
   if (app.connected || app.busy) return app.connected;   // (busy: an install owns the port)
   app.wanted = true;
   try {
     const access = await midiAccess();
     status("looking…", "off");
-    for (const p of pairs(access)) {
-      if (!usualName(p.name) && !/echofield/i.test(p.name)) continue;
-      if (/update|^ota|uboot/i.test(p.name)) continue;   // an update loader's port is the installer's alone
-      try { await p.input.open(); await p.output.open(); } catch { continue; }
+    const found = await findEchofield(access, async (p) => {
+      try { await p.input.open(); await p.output.open(); } catch { return null; }
       const link = new EfLink(midiTransport(p.input, p.output)), ef = new EchoField(link);
       const orig = link.ask.bind(link);
       link.ask = (cmd, body, o = {}) => orig(cmd, body, { ms: 700, tries: 2, ...o });
       const info = await ef.hello();
       link.ask = orig;
-      if (info) {
-        app.link = link; app.ef = ef; app.port = p.name;
-        status(`ECHOFIELD ${info.version} · ${p.name}`, "on");
-        app.emit("connected");
-        return true;
-      }
+      if (info) return { link, ef, info, name: p.name };
       link.close();
+      return null;
+    });
+    if (found) {
+      app.link = found.link; app.ef = found.ef; app.port = found.name;
+      status(`ECHOFIELD ${found.info.version} · ${found.name}`, "on");
+      app.emit("connected");
+      return true;
     }
     status("FM-1 not found", "warn");
     if (!quiet) app.emit("notfound");

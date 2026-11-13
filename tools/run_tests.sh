@@ -36,6 +36,7 @@ node app/tests/proto_test.mjs $B/proto_host | tail -1
 echo "== the flasher's sounds step against the FM-1's code; computers only"
 node app/tests/sounds_test.mjs $B/proto_host | tail -1
 node app/tests/flasher_test.mjs | tail -1
+node app/tests/ports_test.mjs | tail -1
 
 echo "== the companion's stylesheets"
 node app/tests/css_test.mjs | tail -1

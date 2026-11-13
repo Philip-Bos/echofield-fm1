@@ -1,5 +1,13 @@
 # Changelog
 
+## The companion and the flasher, 13 November 2026
+
+- **They find the FM-1 under any port name.** macOS names a USB MIDI port from its own memory of the device, and the
+  FM-1 firmwares share one USB id, so on a Mac that has run another firmware, ECHOFIELD's port can carry that
+  firmware's name. The installer found the FM-1 anyway, but the companion said "FM-1 not found" and the flasher could
+  not put the sounds on ("it did not answer for the sounds"). Both now also ask any port that answers as an FM-1, as
+  the installer does. Nothing to install: the web pages have it.
+
 ## 0.2.11
 
 - **Installs from The Firmware Hub finish cleanly.** ECHOFIELD's identity is now **FM-1_324**, the same to every

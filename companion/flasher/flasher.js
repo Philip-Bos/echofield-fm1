@@ -6,7 +6,7 @@
 // own checklist. After an install, the factory sounds go onto an FM-1 whose bank is empty.
 import { Updater } from "../vendor/fm1-base/fm1ota.js";
 import { productOf, logicalImage, checkUfw } from "../vendor/fm1-base/fm1pkg.js";
-import { pairs, usualName } from "../vendor/fm1-base/fm1ports.js";
+import { findEchofield } from "../lib/efports.js";
 import { EfLink, EchoField, midiTransport } from "../lib/efproto.js";
 import { crc32 } from "../lib/efcodec.js";
 
@@ -185,14 +185,14 @@ async function guard(fn) {
 // ---------------------------------------------------------------- the sounds, after an install
 async function echofield() {           // the FM-1 running ECHOFIELD, by its port and its answer
   for (let t = 0; t < 10; t++) {
-    for (const p of pairs(access)) {
-      if (!usualName(p.name) && !/echofield/i.test(p.name)) continue;
-      if (/update|^ota|uboot/i.test(p.name)) continue;
-      try { await p.input.open(); await p.output.open(); } catch { continue; }
+    const ef = await findEchofield(access, async (p) => {    // (lib/efports.js: by name, then any port it answers on)
+      try { await p.input.open(); await p.output.open(); } catch { return null; }
       const link = new EfLink(midiTransport(p.input, p.output)), ef = new EchoField(link);
       if (await ef.hello()) return ef;
       link.close();
-    }
+      return null;
+    });
+    if (ef) return ef;
     await new Promise((r) => setTimeout(r, 1000));
   }
   return null;
