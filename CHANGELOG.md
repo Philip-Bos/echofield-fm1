@@ -1,6 +1,6 @@
 # Changelog
 
-## Next
+## 0.2.12
 
 - **Record the FM-1 with its own volume down.** A new **AUDIO** page (**GLO** twice; STORAGE is now three presses)
   has OUTPUT, moved there from SYSTEM, and **USB**: on **MASTER** (as before) the USB recording follows the MASTER
