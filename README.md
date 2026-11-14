@@ -250,3 +250,5 @@ are MPL-2.0. [LICENSING.md](LICENSING.md) says which licence covers which file.
 
 *M-VAVE and FM-1 are trademarks of their owners. ECHOFIELD is an independent project, not affiliated with or endorsed
 by M-VAVE. Custom firmware is installed at your own risk.*
+
+You can also try ECHOFIELD in the browser, no flashing needed, in the free community [FM-1 Emulator](https://fm1-emulator.atst.tools/).
