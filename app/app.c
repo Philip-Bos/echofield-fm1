@@ -856,6 +856,130 @@ void app_say(const char *a, const char *b)
     }
 }
 
+/* ================================================================ the screen reader (fm1-reader)
+ * What the screen shows, said as it changes: a page and its knobs, a knob as it turns, the whole screen when the
+ * reader asks (WHERE). The pop-up messages are said by app_say. Nothing is built while no reader listens. */
+#define NHELP_ALL 6
+static const char *const HELP[NPAGES];
+static const char *const HELP_ALL[NHELP_ALL];
+static const char *const PUNCH_NAME[PUNCH_COUNT] = {"FRZ", "REV", "OCT+", "OCT-", "STUT", "HUSH", "BLOOM", "SHIM",
+                                                    "STOP", "SWEEP", "THROW"};
+static int knob_text(int k, char *lab, char *val, float *v0p, float *v1p, int *idp);
+
+static const char *page_name(void)
+{
+    return ui.page < NPAGES ? PAGES[ui.page].name : ui.page == SCR_PRESETS ? "PRESETS"
+           : ui.page == SCR_SYSTEM ? "SYSTEM" : ui.page == SCR_AUDIO ? "AUDIO" : "STORAGE";
+}
+static void sr_knob(int k, char *t)      /* knob k as "LABEL VALUE" ("" if it has none here) */
+{
+    char lab[16], val[16];
+    float v0, v1;
+    int id;
+    t[0] = 0;
+    if (ui.page == SCR_PRESETS && k == 0) {
+        char p[24];
+        preset_label(ui.preset_cursor, p);
+        text_cat(t, "PRESET ");
+        text_cat(t, p);
+        return;
+    }
+    if (ui.page == SCR_STORAGE && k == 0) {
+        int sl = ui.store_cursor;
+        int_text(sl + 1, val);
+        text_cat(t, "SLOT ");
+        text_cat(t, val);
+        text_cat(t, " ");
+        text_cat(t, dir.slot[sl].used ? dir.slot[sl].name : "EMPTY");
+        if (dir.slot[sl].used && slot_state[sl] == SLOT_DAMAGED)
+            text_cat(t, " DAMAGED");
+        return;
+    }
+    if (!knob_text(k, lab, val, &v0, &v1, &id))
+        return;
+    text_cat(t, lab);
+    text_cat(t, " ");
+    text_cat(t, val);
+    if (id >= 0 && locked(id))
+        text_cat(t, " LOCKED");
+}
+static void sr_knobs(char *t)            /* every knob of the page, after t */
+{
+    int k;
+    for (k = 0; k < 4; k++) {
+        char a[48];
+        sr_knob(k, a);
+        if (a[0]) {
+            text_cat(t, ", ");
+            text_cat(t, a);
+        }
+    }
+}
+static void sr_page(void)                /* a new page: its name and its knobs */
+{
+    char t[240];
+    if (!ann_on())
+        return;
+    t[0] = 0;
+    text_cat(t, page_name());
+    sr_knobs(t);
+    ann_say(t, 0, ANN_NOW);
+}
+static void sr_turned(int k)             /* a knob turned: its value once it settles */
+{
+    char t[48];
+    if (!ann_on())
+        return;
+    sr_knob(k, t);
+    if (t[0])
+        ann_later(t, ANN_NOW, 250u, plat_ms());
+}
+static void sr_where(void)               /* the whole screen: the mode, what plays, the page */
+{
+    char t[240], p[24];
+    const ef_ctl_t *c = ef_ctl();
+    t[0] = 0;
+    text_cat(t, MODE_NAME[(int)pv[P_MODE]]);
+    if (c->play)
+        text_cat(t, ", PLAYING");
+    if (c->freeze)
+        text_cat(t, ", FROZEN");
+    if (ef_rec_on())
+        text_cat(t, ", RECORDING");
+    preset_label(ui.preset_cursor, p);
+    if (p[4] != '-') {
+        text_cat(t, ", PRESET ");
+        text_cat(t, p + 4);
+    }
+    text_cat(t, ". ");
+    text_cat(t, page_name());
+    sr_knobs(t);
+    ann_say(t, 0, ANN_NOW);
+}
+static void sr_help(void)                /* HOME held: the page's help, then the buttons' */
+{
+    char t[240];
+    uint32_t i, j = 0;
+    if (!ann_on())
+        return;
+    if (ui.page < NPAGES) {
+        const char *h = HELP[ui.page];
+        for (i = 0; h[i] && j < 200u; i++)
+            if (h[i] == '|')
+                t[j++] = '.', t[j++] = ' ';
+            else
+                t[j++] = h[i];
+        t[j] = 0;
+        ann_say(t, 0, ANN_NOW);
+    }
+    t[0] = 0;
+    for (i = 0; i < NHELP_ALL; i++) {
+        text_cat(t, HELP_ALL[i]);
+        text_cat(t, ". ");
+    }
+    ann_say(t, 0, ui.page < NPAGES ? 0u : ANN_NOW);
+}
+
 /* ================================================================ pages */
 static int group_of(int page)
 {
@@ -872,6 +996,7 @@ static void page_go(int page)
     ui.confirm = CONFIRM_NONE;
     ui.touched = -1;
     ui.d_head = ui.d_field = ui.d_knobs = 1;
+    sr_page();
 }
 static void group_button(int g)          /* a page button: its group's page, or the next page of it */
 {
@@ -1086,6 +1211,8 @@ static void input(void)
             if (HB(B_FX) && black >= 0) {
                 c->punch |= 1u << black;
                 ui.used[B_FX] = 1;
+                if (ann_on() && black < PUNCH_COUNT)
+                    ann_say(PUNCH_NAME[black], 0, ANN_NOW);
                 ui.d_head = ui.d_field = 1;
                 continue;
             }
@@ -1161,6 +1288,8 @@ static void input(void)
             switch (k) {
             case B_PLAY:
                 play_set(!c->play);
+                if (ann_on())
+                    ann_say(c->play ? "PLAYING" : "STOPPED", 0, ANN_NOW);
                 break;
             case B_REC:
                 rec_toggle();
@@ -1208,6 +1337,8 @@ static void input(void)
                         ef_listen(0, 0);
                     else
                         listen_start();
+                    if (ann_on())
+                        ann_say("LISTEN", ef_listening() ? " ON" : " OFF", ANN_NOW);
                     ui.d_field = 1;
                 } else if (tap)
                     group_button(G_SAMPLE);
@@ -1251,6 +1382,7 @@ static void input(void)
         ui.help = 1;
         ui.used[B_HOME] = 1;
         ui.d_field = ui.d_knobs = 1;
+        sr_help();
     }
     if ((btn >> B_ARP & 1u) && !ui.used[B_ARP] && now - ui.down_at[B_ARP] >= 700u) {
         ui.used[B_ARP] = 1;
@@ -1271,6 +1403,14 @@ static void input(void)
         case EN_SELECT:
             param_set(P_POSITION, pv[P_POSITION] + PI[P_POSITION].step * (float)accel((int)e, k), 0);
             ui.d_field = 1;
+            if (ann_on()) {
+                char t[40] = "", v[16];
+                text_cat(t, PI[P_POSITION].label);
+                text_cat(t, " ");
+                pformat(P_POSITION, pv[P_POSITION], v);
+                text_cat(t, v);
+                ann_later(t, ANN_NOW, 250u, now);
+            }
             break;
         case EN_ALGO:
             param_set(P_MODE, (float)(((int)pv[P_MODE] + (e > 0 ? 1 : MODE_COUNT - 1)) % MODE_COUNT), 0);
@@ -1297,8 +1437,10 @@ static void input(void)
                     ui.d_knobs = 1;
                     ses_dirty = 1;
                 }
-            } else
+            } else {
                 knob_turn(cell, (int)e);
+                sr_turned(cell);
+            }
         }
         }
     }
@@ -1419,8 +1561,7 @@ static void draw_head(void)
     ef_ctl_t *c = ef_ctl();
     int mode = (int)pv[P_MODE], idx = 0, n = 0, i;
     int32_t x;
-    const char *name = ui.page < NPAGES ? PAGES[ui.page].name : ui.page == SCR_PRESETS ? "PRESETS"
-                       : ui.page == SCR_SYSTEM ? "SYSTEM" : ui.page == SCR_AUDIO ? "AUDIO" : "STORAGE";
+    const char *name = page_name();
     band(0, HEAD_H);
     x = cv_text(6, 2, &FONT_B, name, col_text);
     if (ui.page < NPAGES)
@@ -1788,14 +1929,15 @@ static const char *const HELP[NPAGES] = {
     "K1 sample  START  END|POSITION   EDIT: LISTEN (as it is)",
 };
 
+static const char *const HELP_ALL[NHELP_ALL] = {"SELECT position  ALGO mode  PRESETS",
+                                                "PLAY drone  REC resample  SEQ freeze",
+                                                "ARP random (hold: all)  ARP+knob lock",
+                                                "OCT- + OCT+ undo   keys play notes",
+                                                "FX+black key: effect  EDIT+white: sample",
+                                                "SAVE+white: preset  SEL+key: root"};
 static void draw_help(void)
 {
-    static const char *const L[] = {"SELECT position  ALGO mode  PRESETS",
-                                    "PLAY drone  REC resample  SEQ freeze",
-                                    "ARP random (hold: all)  ARP+knob lock",
-                                    "OCT- + OCT+ undo   keys play notes",
-                                    "FX+black key: effect  EDIT+white: sample",
-                                    "SAVE+white: preset  SEL+key: root"};
+    const char *const *L = HELP_ALL;
     uint32_t i;
     cv_rect(0, FIELD_Y, 240, FIELD_H, col_bg);
     if (ui.page < NPAGES) {
@@ -1815,7 +1957,7 @@ static void draw_help(void)
         cv_text(6, FIELD_Y + 4, &FONT_XS, a, col_k[0]);
         cv_text(6, FIELD_Y + 20, &FONT_XS, b, col_k[1]);
     }
-    for (i = 0; i < sizeof L / sizeof L[0]; i++)
+    for (i = 0; i < NHELP_ALL; i++)
         cv_text(6, FIELD_Y + 44 + (int32_t)i * 16, &FONT_XS, L[i], col_gray);
 }
 
@@ -1837,8 +1979,7 @@ static void draw_msg(void)
 
 static void draw_punch_map(void)         /* FX held: the black keys' effects */
 {
-    static const char *const P[PUNCH_COUNT] = {"FRZ", "REV", "OCT+", "OCT-", "STUT", "HUSH", "BLOOM", "SHIM", "STOP",
-                                                "SWEEP", "THROW"};
+    const char *const *P = PUNCH_NAME;
     uint32_t i, punch = ef_ctl()->punch;
     cv_rect(0, FIELD_Y + FIELD_H - 40, 240, 40, col_bg);
     for (i = 0; i < PUNCH_COUNT; i++) {
@@ -1918,6 +2059,73 @@ static void draw_field(void)
     band_end(FIELD_Y + 72);
 }
 
+/* knob k's label and value as the screen shows them (and its dial, v0 .. v1): 0 if it has none here */
+static int knob_text(int k, char *lab, char *val, float *v0p, float *v1p, int *idp)
+{
+    float v0 = 0.0f, v1 = 0.0f;
+    int id = -1, have = 1;
+    val[0] = lab[0] = 0;
+    if (ui.page == SCR_AUDIO) {
+        have = k < 2;
+        text_cpy(lab, k == 0 ? "OUTPUT" : k == 1 ? "USB" : "", 16);
+        if (k == 0) {
+            int e = 0;
+            int_text((int32_t)set.out_level * 10, val);
+            while (val[e])                   /* (no strlen on the FM-1) */
+                e++;
+            val[e] = '%', val[e + 1] = 0;
+            v1 = (float)(set.out_level - 5u) / 5.0f;
+        } else if (k == 1) {
+            text_cpy(val, set.usb_fixed ? "FIXED" : "MASTER", 16);
+            v1 = set.usb_fixed ? 1.0f : 0.0f;
+        }
+    } else if (ui.page == SCR_SYSTEM) {
+        static const char *const L[4] = {"THEME", "MIDI CH", "GRAINS", ""};
+        have = k < 3;
+        text_cpy(lab, L[k], 16);
+        if (k == 0)
+            text_cpy(val, THEME_NAME[set.theme], 16), v1 = (float)set.theme / (float)(NTHEMES - 1);
+        else if (k == 1) {
+            if (set.midi_ch)
+                int_text(set.midi_ch, val);
+            else
+                text_cpy(val, "OMNI", 16);
+            v1 = (float)set.midi_ch / 16.0f;
+        } else if (k == 2)
+            int_text(set.voices, val), v1 = (float)(set.voices - 8u) / (float)(EF_MAX_GRAINS - 8u);
+    } else if (ui.page == SCR_PRESETS || ui.page == SCR_STORAGE) {
+        have = k == 0;
+        text_cpy(lab, k == 0 ? (ui.page == SCR_PRESETS ? "PRESET" : "SLOT") : "", 16);
+        if (k == 0) {
+            int n = ui.page == SCR_PRESETS ? preset_count() : (int)BANK_SLOTS,
+                i = ui.page == SCR_PRESETS ? ui.preset_cursor : ui.store_cursor;
+            int_text(i + 1, val);
+            v1 = n > 1 ? (float)i / (float)(n - 1) : 0.0f;
+        }
+    } else {
+        id = PAGES[ui.page].p[k];
+        if (id == -2) {
+            text_cpy(lab, "SAMPLE", 16);
+            if (cur_slot >= 0)
+                int_text(cur_slot + 1, val);
+            else
+                text_cpy(val, cur_slot == -1 ? "SEED" : "TAKE", 16);
+            v1 = cur_slot >= 0 ? (float)cur_slot / 15.0f : 0.0f;
+        } else if (id >= 0) {
+            text_cpy(lab, PI[id].label, 16);
+            pformat(id, pv[id], val);
+            v1 = pnorm(id, pv[id]);
+            if (PI[id].min < 0.0f && PI[id].max > 0.0f)
+                v0 = pnorm(id, 0.0f);   /* bipolar: from the middle */
+        } else
+            have = 0;
+    }
+    *v0p = v0;
+    *v1p = v1;
+    *idp = id;
+    return have;
+}
+
 static void draw_knobs(void)
 {
     int k;
@@ -1927,64 +2135,8 @@ static void draw_knobs(void)
         int32_t x0 = k * 60, cx = x0 + 30, cy = KNOB_Y + 20;
         int lit = ui.touched == k && plat_ms() - ui.turned_at[k] < 1500u;
         char val[16], lab[16];
-        float v0 = 0.0f, v1 = 0.0f;
-        int id = -1, have = 1;
-        val[0] = lab[0] = 0;
-        if (ui.page == SCR_AUDIO) {
-            have = k < 2;
-            text_cpy(lab, k == 0 ? "OUTPUT" : k == 1 ? "USB" : "", 16);
-            if (k == 0) {
-                int e = 0;
-                int_text((int32_t)set.out_level * 10, val);
-                while (val[e])                   /* (no strlen on the FM-1) */
-                    e++;
-                val[e] = '%', val[e + 1] = 0;
-                v1 = (float)(set.out_level - 5u) / 5.0f;
-            } else if (k == 1) {
-                text_cpy(val, set.usb_fixed ? "FIXED" : "MASTER", 16);
-                v1 = set.usb_fixed ? 1.0f : 0.0f;
-            }
-        } else if (ui.page == SCR_SYSTEM) {
-            static const char *const L[4] = {"THEME", "MIDI CH", "GRAINS", ""};
-            have = k < 3;
-            text_cpy(lab, L[k], 16);
-            if (k == 0)
-                text_cpy(val, THEME_NAME[set.theme], 16), v1 = (float)set.theme / (float)(NTHEMES - 1);
-            else if (k == 1) {
-                if (set.midi_ch)
-                    int_text(set.midi_ch, val);
-                else
-                    text_cpy(val, "OMNI", 16);
-                v1 = (float)set.midi_ch / 16.0f;
-            } else if (k == 2)
-                int_text(set.voices, val), v1 = (float)(set.voices - 8u) / (float)(EF_MAX_GRAINS - 8u);
-        } else if (ui.page == SCR_PRESETS || ui.page == SCR_STORAGE) {
-            have = k == 0;
-            text_cpy(lab, k == 0 ? (ui.page == SCR_PRESETS ? "PRESET" : "SLOT") : "", 16);
-            if (k == 0) {
-                int n = ui.page == SCR_PRESETS ? preset_count() : (int)BANK_SLOTS,
-                    i = ui.page == SCR_PRESETS ? ui.preset_cursor : ui.store_cursor;
-                int_text(i + 1, val);
-                v1 = n > 1 ? (float)i / (float)(n - 1) : 0.0f;
-            }
-        } else {
-            id = PAGES[ui.page].p[k];
-            if (id == -2) {
-                text_cpy(lab, "SAMPLE", 16);
-                if (cur_slot >= 0)
-                    int_text(cur_slot + 1, val);
-                else
-                    text_cpy(val, cur_slot == -1 ? "SEED" : "TAKE", 16);
-                v1 = cur_slot >= 0 ? (float)cur_slot / 15.0f : 0.0f;
-            } else if (id >= 0) {
-                text_cpy(lab, PI[id].label, 16);
-                pformat(id, pv[id], val);
-                v1 = pnorm(id, pv[id]);
-                if (PI[id].min < 0.0f && PI[id].max > 0.0f)
-                    v0 = pnorm(id, 0.0f);   /* bipolar: from the middle */
-            } else
-                have = 0;
-        }
+        float v0, v1;
+        int id, have = knob_text(k, lab, val, &v0, &v1, &id);
         if (!have) {
             cv_rect(cx - 6, cy, 12, 1, col_line);
             continue;
@@ -2110,6 +2262,8 @@ void app_frame(void)
     if (ef_meter()->limiting)
         ui.limit_at = plat_ms();
     ef_meter_peak_reset();
+    if (ann_where())
+        sr_where();
     ann_tick(plat_ms());
 }
 

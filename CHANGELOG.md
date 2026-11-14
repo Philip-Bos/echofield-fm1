@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.13
+
+- **The screen reader hears everything** (fm1-reader, #2). Before, ECHOFIELD only spoke its pop-up messages (SAVE,
+  SEQ, REC, OCT±). Now it also says each page with its knobs when you change pages, K1–K4 and SELECT with their
+  values as you turn them, PLAYING / STOPPED, the FX punch-in effects, the help when HOME is held, and the whole
+  screen when the reader asks for it.
+
 ## 0.2.12
 
 - **Record the FM-1 with its own volume down.** A new **AUDIO** page (**GLO** twice; STORAGE is now three presses)

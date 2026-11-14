@@ -1,0 +1,59 @@
+# The screen reader (fm1-reader): pages, knobs and buttons are said as they change (issue #2)
+wait 1500
+listen
+wait 2500
+said CLOUD
+unsaid PRESET ---
+tap LFO
+wait 400
+said GRAIN, SIZE
+turn K1 3
+wait 600
+said SIZE X1.1
+turn K2 -2
+wait 600
+said DENSITY
+turn K3 1
+wait 600
+said ENVELOPE
+turn K4 1
+wait 600
+said TONE
+tap PLAY
+wait 300
+said PLAYING
+turn SELECT 4
+wait 600
+said POSITION
+tap FX
+wait 400
+said FILTER, FILTER
+tap GLO
+wait 400
+said SYSTEM, THEME
+tap GLO
+wait 400
+said AUDIO, OUTPUT
+turn K2 1
+wait 600
+said USB FIXED
+turn K2 -1
+wait 600
+said USB MASTER
+tap GLO
+wait 400
+said STORAGE, SLOT 1
+tap SAVE
+wait 300
+said PRESETS
+where
+wait 300
+said PLAYING
+press HOME
+wait 800
+release HOME
+wait 300
+said ARP random
+tap PLAY
+wait 300
+said STOPPED
