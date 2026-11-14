@@ -44,6 +44,9 @@ wait 500
 shot 11-system.png
 tap GLO
 wait 500
+shot 11-audio.png
+tap GLO
+wait 500
 shot 12-storage.png
 tap HOME
 turn ALGO 2

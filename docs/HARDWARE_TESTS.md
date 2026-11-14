@@ -27,7 +27,9 @@ Before: note the stock firmware version (M-UPGRADE shows it) and have its packag
       BLOOM ___ PULSE ___ DRIFT ___. Then GRAINS 32, DENSITY x4, SIZE x4 in CLOUD: ___ % and whether GRAINS n/m drops
       (the overload guard) and whether it crackles.
 - [ ] MASTER turns the level smoothly.
-- [ ] USB audio: the computer records the FM-1 (its level: MASTER under GLO → SYSTEM → OUTPUT, 80 % by default), no clipping.
+- [ ] USB audio: the computer records the FM-1 (its level: OUTPUT under GLO → AUDIO, 80 % by default), no clipping.
+- [ ] USB FIXED (GLO → AUDIO, the second knob): the recording keeps its level with MASTER down (2026-11-14: -19.9 dB at
+      full, -19.7 dB at a quarter; on MASTER -20.7 / -44.2 dB); the headphones clean while MASTER turns.
 
 ## 3. Panel
 
@@ -41,7 +43,7 @@ Before: note the stock firmware version (M-UPGRADE shows it) and have its packag
 
 ## 4. Samples
 
-- [ ] Samples tab: install the factory sounds. The FM-1 shows RECEIVING SAMPLE; afterwards GLO → STORAGE lists them.
+- [ ] Samples tab: install the factory sounds. The FM-1 shows RECEIVING SAMPLE; afterwards GLO → STORAGE (GLO three times) lists them.
       Time for the 8 starter sounds: ___ s.
 - [ ] Drop in your own WAV at each rate; play it; "As on the FM-1" in the companion sounds the same as the FM-1.
 - [ ] EDIT + white keys switch samples without a click.

@@ -1,5 +1,17 @@
 # Changelog
 
+## Next
+
+- **Record the FM-1 with its own volume down.** A new **AUDIO** page (**GLO** twice; STORAGE is now three presses)
+  has OUTPUT, moved there from SYSTEM, and **USB**: on **MASTER** (as before) the USB recording follows the MASTER
+  knob; on **FIXED** it stays at OUTPUT's level whatever MASTER is, so the headphones and speaker can be turned down,
+  or off, while the computer records. Kept with the settings. The headphones' stereo-width limiter follows MASTER
+  there, so they stay clean.
+- **FX → OUTPUT is now MIX,** redrawn so it says what it does: WIDTH as the sound's spread from L to R, LEVEL as this
+  sound's volume beside what comes out now (red with LIMIT while the limiter holds it). Both are kept with presets;
+  the FM-1's own level is under GLO → AUDIO.
+- **The tape reels turn calmly** on FX → TAPE, about a third of a turn a second, instead of strobing.
+
 ## The companion and the flasher, 13 November 2026
 
 - **They find the FM-1 under any port name.** macOS names a USB MIDI port from its own memory of the device, and the

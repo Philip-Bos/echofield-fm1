@@ -32,6 +32,8 @@ static volatile uint32_t rt_frames, rt_last, rt_gap_max, rt_gaps_long;
  * MASTER does it act. Proto SET 0xF7 sets it (thousandths of full scale; 1000 = off) */
 static volatile float side_ceil = 0.141f;
 
+static float hp_gain(void);              /* the headphones' gain after the render (1 but with USB FIXED) */
+
 #include "params.c"
 #include "presets.c"
 #include "bank.c"
@@ -75,7 +77,7 @@ static uint8_t undo_ok;
 
 static int8_t ov_lo[240], ov_hi[240];    /* the playing sample's outline, -64..63 */
 
-enum { SCR_PRESETS = NPAGES, SCR_SYSTEM, SCR_STORAGE, NSCREENS };
+enum { SCR_PRESETS = NPAGES, SCR_SYSTEM, SCR_AUDIO, SCR_STORAGE, NSCREENS };   /* GLO: SYSTEM, AUDIO, STORAGE */
 
 static struct {
     int page;                            /* a knob page (PAGES), or SCR_* */
@@ -110,6 +112,7 @@ static struct {
     uint32_t say_at;
     uint32_t sound_at;                   /* the last time something was meant to sound (PLAY, keys, RESAMPLE) */
     float peak_q;                        /* the output's peak over the last frame */
+    uint32_t limit_at;                   /* when the output limiter last held it (MIX) */
 } ui;
 
 enum { CONFIRM_NONE, CONFIRM_OVERWRITE, CONFIRM_DELETE_PRESET, CONFIRM_DELETE_SAMPLE };
@@ -166,6 +169,20 @@ static int app_cpu2_state(void)
     return 0;
 #endif
 }
+/* what fm1-base puts on the render for the headphones and speaker: nothing, but with USB FIXED, where the render is
+ * the USB recording's (at OUTPUT's level) and MASTER comes after it (uac_mix.h). The side limiter is the headphones'
+ * own, so it holds their level: at a low MASTER the recording is left wide */
+static float hp_gain(void)
+{
+    if (!set.usb_fixed)
+        return 1.0f;
+    {
+        const uint32_t m = plat_master();
+        const float g = (float)APP_GAIN(m) * (1.0f / 4096.0f);
+        return g > 0.001f ? g : 0.001f;
+    }
+}
+
 void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
 {
     float t = mute_target;
@@ -194,17 +211,18 @@ void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
     mute_gain += (t - mute_gain) * 0.45f;
     if (fm_fabsf(t - mute_gain) < 0.002f)
         mute_gain = t;
-    master_q12 = master_q12 * set.out_level / 10u;   /* OUTPUT: the ceiling, MASTER below it (USB, headphones and
-                                          * speaker alike: fm1-base's separate USB level, plat_usb_audio_full, crackles
-                                          * on the headphones, so it stays off) */
+    master_q12 = master_q12 * set.out_level / 10u;   /* OUTPUT: the ceiling, MASTER below it. USB FIXED
+                                          * (set.usb_fixed, plat_usb_audio_full): the render comes at 4096, so the USB
+                                          * recording is at OUTPUT's level whatever MASTER is; fm1-base puts MASTER on
+                                          * after it for the speaker and headphones */
     ef_render(lr, n, (float)master_q12 * (1.0f / 4096.0f) * mute_gain);
     if (ef_ctl()->dbg_bypass & 64u) {    /* (diagnostics: the output in mono, L and R summed) */
         uint32_t i;
         for (i = 0; i < n; i++)
             lr[2u * i] = lr[2u * i + 1u] = (lr[2u * i] >> 1) + (lr[2u * i + 1u] >> 1);
-    } else if (side_ceil < 1.0f) {       /* the side limiter: instant down, back up over ~100 ms */
+    } else if (side_ceil < hp_gain()) {  /* the side limiter: instant down, back up over ~100 ms */
         static float g = 1.0f;
-        const float thr = side_ceil * 8300000.0f, rel = 1.0f / (0.1f * 44100.0f);
+        const float thr = side_ceil / hp_gain() * 8300000.0f, rel = 1.0f / (0.1f * 44100.0f);
         uint32_t i;
         for (i = 0; i < n; i++) {
             float l = (float)lr[2u * i], r = (float)lr[2u * i + 1u], m = (l + r) * 0.5f, sd = (l - r) * 0.5f;
@@ -845,7 +863,7 @@ static int group_of(int page)
 }
 static void page_go(int page)
 {
-    if (ui.page == SCR_SYSTEM && page != SCR_SYSTEM && ui.settings_dirty) {
+    if ((ui.page == SCR_SYSTEM || ui.page == SCR_AUDIO) && page != ui.page && ui.settings_dirty) {
         ui.settings_dirty = 0;
         store_quiet(OBJ_SETTINGS, &set, sizeof set);
     }
@@ -863,7 +881,7 @@ static void group_button(int g)          /* a page button: its group's page, or 
         return;
     }
     if (g == G_SYSTEM) {
-        page_go(ui.page == SCR_SYSTEM ? SCR_STORAGE : SCR_SYSTEM);
+        page_go(ui.page == SCR_SYSTEM ? SCR_AUDIO : ui.page == SCR_AUDIO ? SCR_STORAGE : SCR_SYSTEM);
         return;
     }
     if (group_of(ui.page) != g) {
@@ -911,9 +929,23 @@ static void knob_turn(int cell, int e)
             set.midi_ch = (uint8_t)clamp(set.midi_ch + d, 0, 16);
         else if (cell == 2)
             set.voices = (uint8_t)clamp(set.voices + d, 8, EF_MAX_GRAINS), ef_ctl()->max_grains = set.voices;
-        else if (cell == 3) {            /* MASTER, 50 % .. 100 % */
+        else
+            return;
+        ui.settings_dirty = 1;
+        ui.d_knobs = ui.d_field = ui.d_head = 1;
+        ui.touched = (int8_t)cell;
+        ui.turned_at[cell] = plat_ms();
+        return;
+    }
+    if (ui.page == SCR_AUDIO) {
+        int d = e > 0 ? 1 : -1;
+        if (cell == 0)                   /* OUTPUT, 50 % .. 100 % */
             set.out_level = (uint8_t)clamp(set.out_level + d, 5, 10);
-        }
+        else if (cell == 1) {            /* USB: follows MASTER, or FIXED at OUTPUT's level */
+            set.usb_fixed = d > 0 ? 1u : 0u;
+            plat_usb_audio_full(set.usb_fixed);
+        } else
+            return;
         ui.settings_dirty = 1;
         ui.d_knobs = ui.d_field = ui.d_head = 1;
         ui.touched = (int8_t)cell;
@@ -1388,14 +1420,14 @@ static void draw_head(void)
     int mode = (int)pv[P_MODE], idx = 0, n = 0, i;
     int32_t x;
     const char *name = ui.page < NPAGES ? PAGES[ui.page].name : ui.page == SCR_PRESETS ? "PRESETS"
-                       : ui.page == SCR_SYSTEM ? "SYSTEM" : "STORAGE";
+                       : ui.page == SCR_SYSTEM ? "SYSTEM" : ui.page == SCR_AUDIO ? "AUDIO" : "STORAGE";
     band(0, HEAD_H);
     x = cv_text(6, 2, &FONT_B, name, col_text);
     if (ui.page < NPAGES)
         n = group_pages(PAGES[ui.page].group, &idx, ui.page);
-    else if (ui.page == SCR_SYSTEM || ui.page == SCR_STORAGE) {
-        n = 2;
-        idx = ui.page == SCR_STORAGE;
+    else if (ui.page == SCR_SYSTEM || ui.page == SCR_AUDIO || ui.page == SCR_STORAGE) {
+        n = 3;
+        idx = ui.page - SCR_SYSTEM;
     }
     for (i = 0; i < n && n > 1; i++)     /* the group's pages as dots */
         cv_rect(x + 6 + i * 7, 9, 4, 4, i == idx ? col_text : col_dim);
@@ -1515,7 +1547,8 @@ static void draw_fx(void)                /* an OP-1-ish picture of the effect pa
     int32_t i, x0 = 16, w = 208, top = FIELD_Y + 16, bot = FIELD_Y + FIELD_H - 16, h = bot - top;
     const char *nm = PAGES[ui.page].name;
     uint16_t a = col_k[0], b = col_k[3];
-    cv_rect(x0, bot, w, 1, col_line);
+    if (nm[0] != 'M')                    /* (the graphs' baseline; MIX has bars of its own) */
+        cv_rect(x0, bot, w, 1, col_line);
     if (nm[0] == 'F') {                  /* FILTER: the response, log frequency */
         int ft = (int)pv[P_FILTER_TYPE];
         float fc = 30.0f * fm_powf(600.0f, pv[P_CUTOFF]), q = 1.0f / (2.0f - 1.94f * pv[P_RESO]);
@@ -1553,7 +1586,10 @@ static void draw_fx(void)                /* an OP-1-ish picture of the effect pa
                 cv_rect(x0 + i, bot - hh - 4 - (i * 13 % 20), 2, 2, col_text);
         }
     } else if (nm[0] == 'T') {           /* TAPE: two reels, the tape between, wobbling */
-        float ph = (float)ui.frame * 0.05f, wob = pv[P_TAPE_WOW] * 6.0f;
+        /* by the clock, not the frame count: about a third of a turn a second (at ~30 frames a second, a few degrees
+         * a frame, so the three spokes turn rather than strobe), WOW swaying the speed a little */
+        const float sec = (float)(plat_ms() % 600000u) * 0.001f, wow = pv[P_TAPE_WOW];
+        float ph = sec * 0.33f + fm_sin_turns(sec * 0.4f) * wow * 0.08f, wob = wow * 6.0f;
         int r, k;
         for (k = 0; k < 2; k++) {
             int32_t cx = k ? 172 : 68, cy = FIELD_Y + 60;
@@ -1563,24 +1599,39 @@ static void draw_fx(void)                /* an OP-1-ish picture of the effect pa
                 cv_pset(cx + (int32_t)(cc * 10.0f), cy + (int32_t)(s * 10.0f), col_dim);
             }
             for (r = 0; r < 3; r++) {
-                float an = ph * (k ? 1.0f : 1.1f) + (float)r / 3.0f;
+                float an = ph * (k ? 0.8f : 1.0f) + (float)r / 3.0f;   /* the take-up reel, fuller, a little slower */
                 cv_line(cx, cy, cx + (int32_t)(fm_sin_turns(an + 0.25f) * 30.0f), cy + (int32_t)(fm_sin_turns(an) * 30.0f), b);
             }
         }
-        for (i = 68; i < 172; i += 2)
-            cv_rect(i, FIELD_Y + 100 + (int32_t)(fm_sin_turns((float)i / 40.0f + ph) * wob), 2, 2, a);
+        for (i = 68; i < 172; i += 2)    /* the tape: its flutter travelling along it */
+            cv_rect(i, FIELD_Y + 100 + (int32_t)(fm_sin_turns((float)i / 40.0f + sec * 0.5f) * wob), 2, 2, a);
         for (i = 0; i < (int32_t)(pv[P_TAPE_AGE] * 30.0f); i++)
             cv_pset(20 + (i * 73 + (int32_t)ui.frame * 7) % 200, FIELD_Y + 20 + (i * 41) % 110, col_dim);
-    } else {                             /* OUTPUT: the stereo image and the level */
-        const ef_meter_t *m = ef_meter();
-        float wd = pv[P_WIDTH], lv = pv[P_LEVEL];
-        int32_t cx = 120, cy = FIELD_Y + 66, rx = 20 + (int32_t)(wd * 80.0f), ry = 36;
-        int k;
-        for (k = 0; k < 64; k++)
-            cv_pset(cx + (int32_t)(fm_sin_turns((float)k / 64.0f + 0.25f) * (float)rx),
-                    cy + (int32_t)(fm_sin_turns((float)k / 64.0f) * (float)ry), a);
-        cv_rect(x0, bot - 6, (int32_t)(lv * (float)w), 3, b);
-        cv_rect(x0, bot - 12, (int32_t)(fm_minf(1.0f, m->peak) * (float)w), 3, m->limiting ? col_rec : col_text);
+    } else {                             /* MIX: the sound's stereo width and level (kept in presets) */
+        static float shown;
+        const float wd = pv[P_WIDTH], lv = pv[P_LEVEL];
+        const int lim = plat_ms() - ui.limit_at < 400u;
+        const int32_t l = 32, r = 208, cx = 120, ty = FIELD_Y + 34, ly = FIELD_Y + 86;
+        int32_t half = 3 + (int32_t)(wd * 85.0f);
+        /* WIDTH: L to R, the sound's spread around the middle */
+        cv_text(8, FIELD_Y + 6, &FONT_XS, "WIDTH  STEREO SPREAD", col_gray);
+        text_r(232, FIELD_Y + 6, &FONT_XS, wd < 0.05f ? "MONO" : wd < 0.5f ? "NARROW" : "WIDE", a);
+        cv_text(14, ty - 6, &FONT_XS, "L", col_gray);
+        cv_text(220, ty - 6, &FONT_XS, "R", col_gray);
+        cv_rect(l, ty, r - l, 1, col_line);
+        cv_rect(cx, ty - 5, 1, 11, col_dim);
+        cv_rect(cx - half, ty - 3, 2 * half, 7, a);
+        /* LEVEL: the setting, and what comes out now (red while the limiter holds it) */
+        cv_text(8, FIELD_Y + 58, &FONT_XS, "LEVEL  THIS SOUND'S VOLUME", col_gray);
+        if (lim)
+            text_r(232, FIELD_Y + 58, &FONT_XS, "LIMIT", col_rec);
+        cv_rect(l, ly, r - l, 7, col_line);
+        cv_rect(l, ly, (int32_t)(lv * (float)(r - l)), 7, col_k[1]);
+        shown = ui.peak_q > shown ? ui.peak_q : shown * 0.9f;
+        cv_rect(l, ly + 11, r - l, 3, col_line);
+        cv_rect(l, ly + 11, (int32_t)(fm_minf(1.0f, shown) * (float)(r - l)), 3, lim ? col_rec : col_text);
+        cv_text(8, ly + 7, &FONT_XS, "OUT", col_dim);
+        cv_text(8, FIELD_Y + 124, &FONT_XS, "KEPT IN PRESETS.   FM-1 LEVEL: GLO", col_dim);
     }
 }
 
@@ -1696,6 +1747,28 @@ static void draw_system(void)
         int st = app_cpu2_state();
         cv_text(8, FIELD_Y + 90, &FONT_XS, st == 1 ? "2 CORES" : st ? "1 CORE (2ND GIVEN UP)" : "1 CORE", st == 1 ? col_k[1] : col_gray);
     }
+    cv_text(8, FIELD_Y + 112, &FONT_XS, "GLO AGAIN: AUDIO", col_dim);
+}
+
+static void meter(int32_t y, const char *what, float v, uint16_t col)   /* a label and a bar, 0..1 */
+{
+    int32_t w = (int32_t)(fm_clampf(v, 0.0f, 1.0f) * 150.0f);
+    cv_text(8, y, &FONT_XS, what, col_gray);
+    cv_rect(80, y + 3, 150, 5, col_line);
+    if (w > 0)
+        cv_rect(80, y + 3, w, 5, col);
+}
+
+static void draw_audio(void)             /* GLO's second page: OUTPUT and USB, with where MASTER and USB are now */
+{
+    const float master = (float)APP_GAIN(plat_master()) * (1.0f / 4096.0f), out = (float)set.out_level * 0.1f;
+    cv_text(8, FIELD_Y + 6, &FONT_XS, "OUTPUT  the most the FM-1 puts out", col_gray);
+    cv_text(8, FIELD_Y + 22, &FONT_XS, set.usb_fixed ? "USB FIXED  records at OUTPUT, MASTER" : "USB MASTER  records at the MASTER knob",
+            col_gray);
+    cv_text(8, FIELD_Y + 36, &FONT_XS, set.usb_fixed ? "  is the headphones' and speaker's only" : "  (FIXED: turn the FM-1 down, still record)",
+            col_gray);
+    meter(FIELD_Y + 62, "HEADPHONES", out * master, col_k[0]);
+    meter(FIELD_Y + 80, "USB", set.usb_fixed ? out : out * master, col_k[1]);
     cv_text(8, FIELD_Y + 112, &FONT_XS, "GLO AGAIN: STORAGE", col_dim);
 }
 
@@ -1709,7 +1782,7 @@ static const char *const HELP[NPAGES] = {
     "TIME  FEEDBACK  ECHO amount|PINGPONG left-right",
     "REVERB amount  SIZE decay|DAMP highs  SHIMMER octave up",
     "WOW slow  FLUTTER fast|AGE wear  HISS noise",
-    "WIDTH stereo  LEVEL output|",
+    "WIDTH stereo spread  LEVEL this sound|both kept in presets; FM-1 level: GLO",
     "ORACLE on  ROOT  SCALE|ACTIVITY how often it moves",
     "AMBIGUITY colour notes  RANGE|GLIDE  DRONE root+fifth bed",
     "K1 sample  START  END|POSITION   EDIT: LISTEN (as it is)",
@@ -1788,6 +1861,8 @@ static void draw_field_content(void)
         draw_storage();
     else if (ui.page == SCR_SYSTEM)
         draw_system();
+    else if (ui.page == SCR_AUDIO)
+        draw_audio();
     else if (PAGES[ui.page].group == G_FX)
         draw_fx();
     else {
@@ -1855,8 +1930,23 @@ static void draw_knobs(void)
         float v0 = 0.0f, v1 = 0.0f;
         int id = -1, have = 1;
         val[0] = lab[0] = 0;
-        if (ui.page == SCR_SYSTEM) {
-            static const char *const L[4] = {"THEME", "MIDI CH", "GRAINS", "OUTPUT"};
+        if (ui.page == SCR_AUDIO) {
+            have = k < 2;
+            text_cpy(lab, k == 0 ? "OUTPUT" : k == 1 ? "USB" : "", 16);
+            if (k == 0) {
+                int e = 0;
+                int_text((int32_t)set.out_level * 10, val);
+                while (val[e])                   /* (no strlen on the FM-1) */
+                    e++;
+                val[e] = '%', val[e + 1] = 0;
+                v1 = (float)(set.out_level - 5u) / 5.0f;
+            } else if (k == 1) {
+                text_cpy(val, set.usb_fixed ? "FIXED" : "MASTER", 16);
+                v1 = set.usb_fixed ? 1.0f : 0.0f;
+            }
+        } else if (ui.page == SCR_SYSTEM) {
+            static const char *const L[4] = {"THEME", "MIDI CH", "GRAINS", ""};
+            have = k < 3;
             text_cpy(lab, L[k], 16);
             if (k == 0)
                 text_cpy(val, THEME_NAME[set.theme], 16), v1 = (float)set.theme / (float)(NTHEMES - 1);
@@ -1868,15 +1958,6 @@ static void draw_knobs(void)
                 v1 = (float)set.midi_ch / 16.0f;
             } else if (k == 2)
                 int_text(set.voices, val), v1 = (float)(set.voices - 8u) / (float)(EF_MAX_GRAINS - 8u);
-            else
-            {
-                int e = 0;
-                int_text((int32_t)set.out_level * 10, val);
-                while (val[e])                   /* (no strlen on the FM-1) */
-                    e++;
-                val[e] = '%', val[e + 1] = 0;
-                v1 = (float)(set.out_level - 5u) / 5.0f;
-            }
         } else if (ui.page == SCR_PRESETS || ui.page == SCR_STORAGE) {
             have = k == 0;
             text_cpy(lab, k == 0 ? (ui.page == SCR_PRESETS ? "PRESET" : "SLOT") : "", 16);
@@ -2015,7 +2096,7 @@ void app_frame(void)
         draw_head();
     }
     if (ui.d_field || (ui.frame & 1u)) { /* the field moves: about 30 a second */
-        int live = ui.page < NPAGES || ui.page == SCR_SYSTEM;
+        int live = ui.page < NPAGES || ui.page == SCR_SYSTEM || ui.page == SCR_AUDIO;
         if (ui.d_field || live) {
             ui.d_field = 0;
             draw_field();
@@ -2026,6 +2107,8 @@ void app_frame(void)
         draw_knobs();
     }
     ui.peak_q = ef_meter()->peak;
+    if (ef_meter()->limiting)
+        ui.limit_at = plat_ms();
     ef_meter_peak_reset();
     ann_tick(plat_ms());
 }
@@ -2083,7 +2166,7 @@ void app_init(void)
     if (plat_cpu2_set(1) == 0)           /* at power-on only (plat.h); with cpu2_fallback, one core if it fails */
         ef_set_cpu2(plat_cpu2_run, plat_cpu2_wait);
 #endif
-    plat_usb_audio_full(0);              /* USB carries what the headphones get (see OUTPUT, app_render) */
+    plat_usb_audio_full(set.usb_fixed);  /* USB FIXED or at MASTER (see OUTPUT, app_render) */
     select_now(s);
     ses_dirty = 0;
 }

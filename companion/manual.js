@@ -121,7 +121,7 @@ export function init() {
     <li>On the <b>SAMPLE</b> page (the <b>EDIT</b> button), press <b>EDIT</b> again: it plays from START to END, with a white
       line moving across it. Press <b>EDIT</b> once more to stop. The cloud fades out meanwhile and comes back after.</li>
     <li>Hold <b>EDIT</b> and hold a white key: that sound, plain, until you let go.</li>
-    <li>On the storage page (<b>GLO</b> twice): pick a sound with K1, press <b>OCT+</b>.</li>
+    <li>On the storage page (<b>GLO</b> three times): pick a sound with K1, press <b>OCT+</b>.</li>
     <li>In this app: the <b>▶</b> next to a sound on the Samples page.</li>
   </ul>
   <div class="shots">${shot("03-sample", "EDIT: the sample, its start (green) and end (white) brackets")}
@@ -133,7 +133,7 @@ export function init() {
 <section>
   <h2>The buttons</h2>
   <ul>
-    <li><b>HOME · ENV · LFO · FX · SEL · EDIT</b> open pages of knobs (below). <b>GLO</b>: settings and storage. <b>SAVE</b>: presets.</li>
+    <li><b>HOME · ENV · LFO · FX · SEL · EDIT</b> open pages of knobs (below). <b>GLO</b>: settings, audio and storage. <b>SAVE</b>: presets.</li>
     <li><b>PLAY</b> starts or stops the endless sound (the keys play either way).</li>
     <li><b>REC</b> records up to 5 seconds of what you hear into a new sound (press again to stop) — resampling, like the OP-1.</li>
     <li><b>SEQ</b> freezes everything in place.</li>
@@ -185,8 +185,10 @@ export function init() {
     <li><b>● REC</b> starts a take, <b>■ STOP</b> ends it (up to 5 minutes). Each take is listed: <b>▶</b> play, <b>⤓ WAV</b>
       download (24-bit, as it came in), <b>→ Sample</b> make it a new sound on the Samples page, <b>✕</b> forget it.
       With two or more, <b>⤓ All takes</b> saves them in one ZIP.</li>
-    <li>The level: <b>MASTER</b>, under <b>GLO → SYSTEM → OUTPUT</b>, the most the FM-1 puts out (USB, headphones and
-      speaker alike): <b>80 %</b> at first, 50–100 %. Clipping in a take: turn MASTER or OUTPUT down.</li>
+    <li>The level, on the FM-1's <b>AUDIO</b> page (<b>GLO</b> twice): <b>OUTPUT</b>, the most the FM-1 puts out,
+      <b>80 %</b> at first, 50–100 %; and <b>USB</b>: on <b>MASTER</b> (at first) the recording follows the MASTER knob,
+      on <b>FIXED</b> it stays at OUTPUT's level whatever MASTER is, so you can turn the FM-1 down, or off, while you
+      record. Clipping in a take: turn OUTPUT down.</li>
     <li>Takes are kept until you close the page: download the ones you want.</li>
   </ul>
 </section>
@@ -200,8 +202,8 @@ export function init() {
     <li>Pick a slot and press <b>Send to FM-1</b>. It plays straight away. Press <b>▶</b> next to it to hear it as it is.</li>
   </ol>
   <p>Storage is small (about 30–60 seconds in all), so short sounds work best — a chord, a note, a breath, a bit of a song.
-  The factory sounds are ordinary sounds: delete them whenever you need room (Samples page, or <b>GLO → GLO</b> on the FM-1).</p>
-  <div class="shots">${shot("12-storage", "GLO twice: the storage, and every sound in it")}</div>
+  The factory sounds are ordinary sounds: delete them whenever you need room (Samples page, or <b>GLO</b> three times on the FM-1).</p>
+  <div class="shots">${shot("12-storage", "GLO three times: the storage, and every sound in it")}</div>
   <h3>Record a sound</h3>
   <p>Next to the drop area, press <b>● Record one</b>. Pick the input: a microphone, an audio interface, or another FM-1 over
   USB (an FM-1 running Sloop or the stock firmware is an ordinary audio input when it is plugged in, so whatever it plays
@@ -226,7 +228,7 @@ export function init() {
 
 <section>
   <h2>Problems?</h2>
-  <details><summary>No sound</summary><p>Turn MASTER up, press PLAY. Still nothing: a preset may have its LEVEL low (FX → OUTPUT page).</p></details>
+  <details><summary>No sound</summary><p>Turn MASTER up, press PLAY. Still nothing: a preset may have its LEVEL low (FX → MIX page).</p></details>
   <details><summary>It crackles</summary><p>Look at <b>GLO</b>: it should say <b>2 CORES</b> and a CPU figure well under 80 %. If it says
     1 CORE, switch the FM-1 off and on. Very dense settings (32 grains, DENSITY ×4) can still be a lot: ECHOFIELD then plays
     fewer grains rather than crackle. On headphones, only near full volume: update to 0.2.7 or later (it holds the

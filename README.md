@@ -165,7 +165,8 @@ hot loops run from RAM, out of the flash cache's way. Effects come after the gra
 - **Tape:** wow, flutter, saturation, wear and hiss.
 - **Filter and drive:** a state-variable filter.
 - **Delay and reverb:** a 1-second ping-pong delay and an 8-line reverb with shimmer.
-- **Output:** width, a slow auto-level, a limiter, and a stereo-width limiter that keeps the FM-1's headphone output
+- **Output:** width, a slow auto-level, a limiter, USB recording at MASTER or FIXED (turn the FM-1 down while you
+  record), and a stereo-width limiter that keeps the FM-1's headphone output
   clean at full volume.
 
 Samples are stored in their own format, built so any block decodes on its own and can't be mistaken for an update

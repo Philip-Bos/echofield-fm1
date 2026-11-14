@@ -24,7 +24,9 @@ typedef struct {
                                           * MASTER below it. (rev 0: usb_full, 0 / 1; rev 1: USB only, 0 = at MASTER) */
     uint8_t cc_out;                      /* knob moves out as MIDI CC */
     uint8_t rev;                         /* 2: out_level (an older FM-1's settings have 0 or 1 here) */
-    uint8_t rsv[2];
+    uint8_t usb_fixed;                   /* USB (GLO → AUDIO): 0 the USB recording follows MASTER, 1 FIXED at OUTPUT's
+                                          * level whatever MASTER is (MASTER the speaker's and headphones' only) */
+    uint8_t rsv;
 } settings_t;
 
 typedef struct {
@@ -69,6 +71,7 @@ static void settings_defaults(void)
     set.out_level = OUT_DEFAULT;
     set.cc_out = 0;
     set.rev = 2;
+    set.usb_fixed = 0;
 }
 
 static void settings_load(void)
@@ -83,6 +86,8 @@ static void settings_load(void)
     set.rev = 2;
     if (set.out_level < 5u || set.out_level > 10u)
         set.out_level = OUT_DEFAULT;
+    if (set.usb_fixed > 1u)
+        set.usb_fixed = 0;
 }
 
 static int locked(int id) { return (locks[id >> 3] >> (id & 7)) & 1; }
