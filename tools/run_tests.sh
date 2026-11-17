@@ -28,6 +28,7 @@ node app/tests/codec_test.mjs $B/efdec | tail -1
 
 echo "== parameter table"
 python3 tools/gen_efparams.py --check
+python3 tools/gen_changelog.py --check
 
 echo "== protocol: companion client vs FM-1 code (ASan, UBSan)"
 cc -O1 $SAN $W -DPLAT_HOST -Iapp/dsp -Iapp -Ibase/include app/tests/proto_host.c app/dsp/engine.c -lm -o $B/proto_host

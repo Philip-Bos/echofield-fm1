@@ -1,5 +1,13 @@
 # Changelog
 
+## The companion and the flasher, 17 November 2026
+
+- **What's new in the companion follows this changelog** (it had stopped at 0.2.7): the newest versions first, the
+  earlier ones folded away.
+- **The flasher explains M-Flasher** in a card of its own, "Coming from another firmware? M-Flasher": for an FM-1 whose
+  firmware doesn't answer installers (one behind M-Bootloader, say), with the steps, and why to leave M-Bootloader off
+  on the newer FM-1.
+
 ## 0.2.15
 
 - **The starter sounds come with the firmware.** At the first start after a new install (no ECHOFIELD bank on the

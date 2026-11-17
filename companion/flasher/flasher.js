@@ -156,7 +156,7 @@ function stepUi(name, b, total, pct) {
 }
 
 const ERR = {
-  notfound: "The FM-1 was not found. Check the cable and close other apps using it, then press Find the FM-1. Still not found while it runs another firmware? Some don't answer installers: install with M-Flasher instead (below).",
+  notfound: "The FM-1 was not found. Check the cable and close other apps using it, then press Find the FM-1. Another firmware on it that never answers? see “Coming from another firmware? M-Flasher” below.",
   model: "That device is not an FM-1.",
   stopped: "The FM-1 stopped before anything was written. Nothing changed: try again.",
   lost: "The connection was lost during the install. Plug the FM-1 back in and press Resume: it is waiting in its update loader.",

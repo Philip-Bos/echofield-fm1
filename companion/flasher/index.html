@@ -73,6 +73,21 @@
     </div>
 
     <div class="card">
+      <h2>Coming from another firmware? M-Flasher</h2>
+      <p>This page finds an FM-1 that runs ECHOFIELD, the stock firmware or another firmware that answers installers. Some
+        don't (one behind <b>M-Bootloader</b>, for example): if <b>Find the FM-1</b> can't reach yours, install ECHOFIELD with
+        <a href="https://jvitkauskas.github.io/m-apps/flasher/guide/" target="_blank" rel="noopener">M-Flasher</a> instead.</p>
+      <ol>
+        <li>Download <b>echofield-….fwsc</b> from the <a href="https://github.com/Philip-Bos/echofield-fm1/releases/latest" target="_blank" rel="noopener">latest release</a>.</li>
+        <li>Open M-Flasher, put the FM-1 in download mode as its guide says, choose the file and flash it.</li>
+        <li>ECHOFIELD puts its <b>8 starter sounds</b> on by itself at its first start. Come back here afterwards for updates
+          and, if you want them, the other 6 factory sounds.</li>
+      </ol>
+      <p class="muted">ECHOFIELD runs on the older and the newer FM-1 (sold from late 2026, a newer flash chip). M-Bootloader's
+        own page says it is little tested on that newer chip, so on a newer FM-1 leave M-Bootloader off.</p>
+    </div>
+
+    <div class="card">
       <h2>How this keeps the FM-1 safe</h2>
       <ul class="safe">
         <li>The FM-1's own boot loader (the first 16 KB of its flash) is <b>never written</b>: its start-up and its built-in
@@ -83,11 +98,6 @@
           press <b>Resume</b>.</li>
         <li>If a firmware fails to start twice, the FM-1 opens <b>SAFE MODE</b> (no sound, USB on): this page installs from
           there. After four failed starts it enters the chip's own update mode.</li>
-        <li>Coming from another firmware this page can't find (some don't answer installers, one behind M-Bootloader for
-          example)? Install the package from the <a href="https://github.com/Philip-Bos/echofield-fm1/releases/latest" target="_blank" rel="noopener">latest release</a> with
-          <a href="https://jvitkauskas.github.io/m-apps/flasher/guide/" target="_blank" rel="noopener">M-Flasher</a>: ECHOFIELD puts its starter sounds on by itself, and this
-          page does updates afterwards. ECHOFIELD runs on the older and the newer FM-1; M-Bootloader is little tested on
-          the newer one's flash chip (its own page says so), so leave it off there.</li>
         <li>Your samples live outside the firmware's area: updating keeps them, and ECHOFIELD puts its 8 starter sounds in only at a new install, when it finds no bank of its own.</li>
       </ul>
     </div>

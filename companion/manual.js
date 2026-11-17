@@ -4,6 +4,7 @@
 // simulator draws them during the tests: app/tests/screens.txt), so they always match what the FM-1 shows.
 import { $ } from "./app.js";
 import { PARAMS, PAGES, MODES, MODE_BLURB } from "./lib/efparams.js";
+import { CHANGES } from "./lib/changelog.js";     // from CHANGELOG.md (tools/gen_changelog.py)
 
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
 const shot = (f, cap) => `<figure><img src="manual/${f}.png" alt="${esc(cap)}" width="240" height="240" loading="lazy"><figcaption>${cap}</figcaption></figure>`;
@@ -65,21 +66,14 @@ export function init() {
     "</ul></details>").join("");
   const modes = MODES.map((m, i) => `<li><b>${m}</b> — ${esc(MODE_BLURB[i])}</li>`).join("");
   const ccs = PARAMS.filter((p) => p.cc).map((p) => `<tr><td>${p.cc}</td><td>${p.label}</td></tr>`).join("");
+  const ver = (c) => `<h3>${esc(c.title)}</h3><ul>${c.items.map((i) => `<li>${i}</li>`).join("")}</ul>`;
+  const news = CHANGES.slice(0, 3).map(ver).join("") +
+    `<details><summary>Earlier versions</summary>${CHANGES.slice(3).map(ver).join("")}</details>` +
+    `<p class="small muted">Every change: the <a href="https://github.com/Philip-Bos/echofield-fm1/blob/main/CHANGELOG.md" target="_blank" rel="noopener">changelog</a>.</p>`;
   $("manual").innerHTML = `
 <section>
-  <h2>New in 0.2</h2>
-  <ul>
-    <li><b>LISTEN</b>: hear a sound as it is, plain, before the grains change it (below: "Listen to a sound as it is").</li>
-    <li><b>Both of the FM-1's cores</b> make the sound now: no more crackle when you play hard. <b>GLO</b> shows <b>2 CORES</b>.</li>
-    <li><b>A new Sound page</b> in this app: the sound's waveform to drag, big knobs, an XY pad and every effect on view.</li>
-    <li><b>The emulator</b>: the whole firmware in your browser, on a drawn FM-1 — try it with no FM-1 at all.</li>
-    <li><b>Installing</b> is its own page now (<b>Firmware…</b>), on computers only, and ECHOFIELD puts its starter sounds on by itself.</li>
-    <li><b>Cleaner output</b>: long reverbs with shimmer no longer build up a hidden offset that took the headroom
-      (0.2.4); no more crackle on headphones at high volume (0.2.7: the widest stereo is held in a little near full
-      MASTER); a new <b>OUTPUT</b> ceiling, 80 % at first (GLO → SYSTEM).</li>
-    <li><b>Recording</b>: record a new sound straight from a microphone, an audio interface or another FM-1 (Samples), and
-      record what ECHOFIELD plays, take after take, as WAV files (Sound). Below: "Record a sound" and "Record the FM-1".</li>
-  </ul>
+  <h2>What's new</h2>
+  ${news}
 </section>
 
 <section>

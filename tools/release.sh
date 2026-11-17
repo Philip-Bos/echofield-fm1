@@ -10,6 +10,14 @@ V=${1:?usage: tools/release.sh VERSION}
 cd "$(dirname "$0")/.."
 [ -x .venv/bin/python ] && PATH=$PWD/.venv/bin:$PATH
 export JIELI_TOOLCHAIN=${JIELI_TOOLCHAIN:-$HOME/.jieli/toolchain} AC79_SDK=${AC79_SDK:-$HOME/fw-AC79_AIoT_SDK}
+# the changelog: "## Next" becomes this version's section, and a release without its entry stops here (the companion's
+# What's new is made from it: tools/gen_changelog.py)
+if grep -q "^## Next$" CHANGELOG.md; then
+  sed -i.bak "s/^## Next$/## $V/" CHANGELOG.md && rm -f CHANGELOG.md.bak
+fi
+grep -q "^## $V$" CHANGELOG.md || { echo "CHANGELOG.md has no \"## Next\" or \"## $V\" section: write what changed first"; exit 1; }
+python3 tools/gen_changelog.py
+sed -i.bak -E "s/release.sh [0-9][0-9.]* /release.sh $V /" README.md && rm -f README.md.bak   # (its Build section)
 tools/run_tests.sh
 python3 tools/gen_efparams.py --check
 python3 tools/build.py app --release "$V" | grep -E "^  ok|^  FAIL|ERROR|^package"
