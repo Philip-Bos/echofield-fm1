@@ -34,7 +34,7 @@ cc -O1 $SAN $W -DPLAT_HOST -Iapp/dsp -Iapp -Ibase/include app/tests/proto_host.c
 node app/tests/proto_test.mjs $B/proto_host | tail -1
 
 echo "== the flasher's sounds step against the FM-1's code; computers only"
-node app/tests/sounds_test.mjs $B/proto_host | tail -1
+node app/tests/sounds_test.mjs $B/proto_host > $B/test/sounds.txt 2>&1 || { cat $B/test/sounds.txt; exit 1; }; tail -1 $B/test/sounds.txt
 node app/tests/flasher_test.mjs | tail -1
 node app/tests/ports_test.mjs | tail -1
 

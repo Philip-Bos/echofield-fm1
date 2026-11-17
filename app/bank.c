@@ -144,14 +144,17 @@ static int slot_verify(uint32_t s)
 }
 
 /* boot: the directory loaded and every entry checked; -> samples that play */
+static uint8_t bank_fresh;               /* no ECHOFIELD bank was there: a first start after a new install */
 static uint32_t bank_load(void)
 {
     uint8_t taken[BANK_MAPB] = {0};
     uint32_t i, k, ok = 0;
     crc_init();
     if (plat_store_load(OBJ_BANK, &dir, sizeof dir) != (int)sizeof dir || dir.magic != BANK_MAGIC ||
-        dir.version != BANK_VERSION || dir.nslots != BANK_SLOTS)
+        dir.version != BANK_VERSION || dir.nslots != BANK_SLOTS) {
         dir_empty();
+        bank_fresh = 1;
+    }
     for (i = 0; i < BANK_SLOTS; i++) {
         bank_slot_t *e = &dir.slot[i];
         uint32_t n;

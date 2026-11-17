@@ -128,14 +128,24 @@ def main():
     if not fm:
         raise SystemExit("sounds: no FM-1 running ECHOFIELD answers; put them on from the companion's Samples page")
     d = fm.ask(0x71, [])
-    if any(d[1 + i * 20] for i in range(16)):
+    allf = json.loads((FAC / "factory.json").read_text())["sounds"]
+    ent = [(i, d[1 + i * 20], d[2 + i * 20], bytes(d[3 + i * 20:15 + i * 20]).split(b"\0")[0].decode("ascii", "replace").strip())
+           for i in range(16)]
+    used = [e for e in ent if e[1]]
+    # an empty bank gets the sounds chosen; a bank of factory sounds only (0.2.15 and later put the starter ones in at
+    # a new install) gets the rest of "all"; a bank with any sound of yours is left alone (flasher.js installSounds)
+    if used and not (choice == "all" and all(e[2] and e[3] in {s["name"] for s in allf} for e in used)):
         return print("sounds: the FM-1 already has samples: they are kept")
-    sounds = [s for s in json.loads((FAC / "factory.json").read_text())["sounds"] if choice == "all" or s["starter"]]
+    have = {e[3] for e in used}
+    sounds = [s for s in allf if (choice == "all" or s["starter"]) and s["name"] not in have]
+    if not sounds:
+        return print("sounds: the factory sounds are already on")
+    free = [e[0] for e in ent if not e[1]]
     for k, s in enumerate(sounds):
         pay = (FAC / s["file"]).read_bytes()
         if zlib.crc32(pay) != s["crc"]:
             raise SystemExit(f"{s['file']} is damaged")
-        fm.upload(k, pay, s)
+        fm.upload(free[k], pay, s)
         print(f"sounds: {s['name']} ({k + 1}/{len(sounds)})")
     fm.ask(0x76, [0xF2, 0, 0])
     print(f"sounds: {len(sounds)} installed")

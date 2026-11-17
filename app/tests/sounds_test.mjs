@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Philip Bos
 // The flasher's sounds step (companion/flasher/flasher.js installSounds) against the FM-1's own bank and protocol code
-// (tests/proto_host.c): an empty bank gets the starter set, every sound checked; a bank with samples is left alone.
+// (tests/proto_host.c): an empty bank gets the starter set, every sound checked; a bank of factory sounds gets the rest
+// of "all"; a bank with a sound of yours is left alone.
 //   node tests/sounds_test.mjs build/proto_host
 import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -23,8 +24,19 @@ let r = await installSounds(ef, "starter");
 let dir = await ef.dir();
 check(r.done === starter.length, `empty bank: ${r.done} starter sounds installed`);
 check(starter.every((s, i) => dir[i].state === "ok" && dir[i].name === s.name && dir[i].frames === s.frames), "each in its slot, checked by the FM-1");
+r = await installSounds(ef, "starter");
+check(r.done === 0 && /already/.test(r.why), "starter again: nothing to add");
 r = await installSounds(ef, "all");
-check(r.done === 0 && /kept/.test(r.why), "a bank with samples is left alone");
+dir = await ef.dir();
+check(r.done === 14 - starter.length && dir.filter((d) => d.state === "ok").length === 14 && (await ef.hello()).free === 92 - 67,
+  "a bank of the starter sounds (as ECHOFIELD puts them in): all 14 adds the other 6");
+await ef.erase(13);
+const own = new Uint8Array(readFileSync(join(C, "factory", JSON.parse(readFileSync(join(C, "factory/factory.json"))).sounds[0].file)));
+const s0 = JSON.parse(readFileSync(join(C, "factory/factory.json"))).sounds[0];
+await ef.upload(13, own, { frames: s0.frames, rate: s0.rate, name: "MY SOUND", factory: false, crc: s0.crc });
+await ef.erase(12);
+r = await installSounds(ef, "all");
+check(r.done === 0 && /kept/.test(r.why) && (await ef.dir())[12].state === "empty", "a bank with a sound of yours is left alone");
 await ef.wipe();
 check((await installSounds(ef, "none")).done === 0 && (await ef.dir()).every((d) => d.state === "empty"), "none: nothing installed");
 r = await installSounds(ef, "all");

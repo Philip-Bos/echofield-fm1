@@ -48,11 +48,10 @@
         <li data-c="keep" class="manual"><label><input type="checkbox"> I won't unplug or switch off until this page says <b>Done</b></label></li>
       </ol>
       <fieldset class="quality">
-        <legend>Sounds after installing (only if the FM-1 has no samples yet: yours are never touched)</legend>
+        <legend>Factory sounds (ECHOFIELD brings the 8 starter sounds itself; yours are never touched)</legend>
         <div class="row wrap gap">
           <label class="chk"><input type="radio" name="snd" value="starter" checked> The 8 starter sounds (160 KB)</label>
           <label class="chk"><input type="radio" name="snd" value="all"> All 14 factory sounds (268 KB)</label>
-          <label class="chk"><input type="radio" name="snd" value="none"> None</label>
         </div>
       </fieldset>
       <p id="fw-backup" class="note"></p>
@@ -84,7 +83,12 @@
           press <b>Resume</b>.</li>
         <li>If a firmware fails to start twice, the FM-1 opens <b>SAFE MODE</b> (no sound, USB on): this page installs from
           there. After four failed starts it enters the chip's own update mode.</li>
-        <li>Your samples live outside the firmware's area: updating keeps them, and the sounds step only fills an empty bank.</li>
+        <li>Coming from another firmware this page can't find (some don't answer installers, one behind M-Bootloader for
+          example)? Install the package from the <a href="https://github.com/Philip-Bos/echofield-fm1/releases/latest" target="_blank" rel="noopener">latest release</a> with
+          <a href="https://jvitkauskas.github.io/m-apps/flasher/guide/" target="_blank" rel="noopener">M-Flasher</a>: ECHOFIELD puts its starter sounds on by itself, and this
+          page does updates afterwards. ECHOFIELD runs on the older and the newer FM-1; M-Bootloader is little tested on
+          the newer one's flash chip (its own page says so), so leave it off there.</li>
+        <li>Your samples live outside the firmware's area: updating keeps them, and ECHOFIELD puts its 8 starter sounds in only at a new install, when it finds no bank of its own.</li>
       </ul>
     </div>
 

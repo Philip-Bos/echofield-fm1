@@ -156,7 +156,7 @@ function stepUi(name, b, total, pct) {
 }
 
 const ERR = {
-  notfound: "The FM-1 was not found. Check the cable and close other apps using it, then press Find the FM-1.",
+  notfound: "The FM-1 was not found. Check the cable and close other apps using it, then press Find the FM-1. Still not found while it runs another firmware? Some don't answer installers: install with M-Flasher instead (below).",
   model: "That device is not an FM-1.",
   stopped: "The FM-1 stopped before anything was written. Nothing changed: try again.",
   lost: "The connection was lost during the install. Plug the FM-1 back in and press Resume: it is waiting in its update loader.",
@@ -201,14 +201,21 @@ async function echofield() {           // the FM-1 running ECHOFIELD, by its por
 export async function installSounds(ef, choice, onProgress) {
   if (choice === "none") return { done: 0, why: "none chosen" };
   const dir = await ef.dir();
-  if (dir.some((d) => d.state !== "empty")) return { done: 0, why: "the FM-1 already has samples: they are kept" };
   const all = (await (await fetch("../factory/factory.json")).json()).sounds;
-  const list = all.filter((s) => choice === "all" || s.starter);
+  const used = dir.filter((d) => d.state !== "empty"), names = new Set(all.map((s) => s.name));
+  // an empty bank gets the sounds chosen; a bank of factory sounds only (ECHOFIELD 0.2.15 and later put the starter
+  // ones in at a new install) gets the rest of "all"; a bank with any sound of yours is left alone
+  if (used.length && !(choice === "all" && used.every((d) => d.factory && names.has(d.name))))
+    return { done: 0, why: "the FM-1 already has samples: they are kept" };
+  const have = new Set(used.map((d) => d.name));
+  const list = all.filter((s) => (choice === "all" || s.starter) && !have.has(s.name));
+  if (!list.length) return { done: 0, why: "the factory sounds are already on" };
+  const free = dir.filter((d) => d.state === "empty").map((d) => d.slot);
   let k = 0;
   for (const s of list) {
     const pay = new Uint8Array(await (await fetch("../factory/" + s.file)).arrayBuffer());
     if (crc32(pay) !== s.crc) throw new Error(`${s.file} is damaged: download the flasher again`);
-    await ef.upload(k, pay, { frames: s.frames, rate: s.rate, name: s.name, factory: true, crc: s.crc },
+    await ef.upload(free[k], pay, { frames: s.frames, rate: s.rate, name: s.name, factory: true, crc: s.crc },
       (b, t) => onProgress?.((k + b / t) / list.length, s.name));
     k++;
   }

@@ -2299,10 +2299,14 @@ void app_frame(void)
     ann_tick(plat_ms());
 }
 
-/* ================================================================ the browser emulator */
-#if defined(__EMSCRIPTEN__) || defined(PLAT_HOST)
-/* an emulated FM-1 starts as a real one does after the flasher: the factory sounds in its bank (the host simulator
- * loads them on its "factory" command: the video's clips, app/../video) */
+/* ================================================================ the factory sounds
+ * An emulated FM-1 starts with all of them in its bank (the host simulator loads them on its "factory" command: the
+ * video's clips, app/../video). The FM-1 has the starter sounds built in and puts them in its bank at the first start
+ * after a new install (no ECHOFIELD bank there yet), so any installer brings them, M-Flasher too. A bank that is
+ * there is never touched: an update, or a bank emptied on purpose. */
+#if !defined(__EMSCRIPTEN__) && !defined(PLAT_HOST)
+#define FAC_STARTER_ONLY
+#endif
 #include "factory_data.h"
 static int fac_fill(uint32_t index, uint8_t *pay, void *ctx)
 {
@@ -2322,7 +2326,44 @@ static void emu_factory(void)
         bank_write(s, FAC_SOUNDS[s].frames, FAC_SOUNDS[s].rate, FAC_SOUNDS[s].name, FAC_SOUNDS[s].crc, 1, fac_fill,
                    (void *)&FAC_SOUNDS[s], 0);
 }
+
+static uint32_t fac_k;                   /* the sound being written, for its progress */
+static void fac_progress(uint32_t k, uint32_t n)
+{
+    char t[32], a[8];
+    int32_t w = (int32_t)(200u * (fac_k * 8u + 8u * k / (n ? n : 1u)) / (FAC_STARTER * 8u));
+    cv_begin(240, 60, col_bg);
+    cv_text(20, 4, &FONT_B, "ADDING SOUNDS", col_text);
+    cv_rect(20, 30, 200, 8, col_line);
+    cv_rect(20, 30, w, 8, col_k[3]);
+    t[0] = 0;
+    int_text((int32_t)fac_k + 1, t);
+    text_cat(t, " / ");
+    int_text((int32_t)FAC_STARTER, a);
+    text_cat(t, a);
+    text_cat(t, "  ");
+    text_cat(t, FAC_SOUNDS[fac_k].name);
+    cv_text(20, 42, &FONT_XS, t, col_gray);
+    cv_blit(0, 90);
+}
+void app_boot(void)                      /* the platform up: a fresh install gets the starter sounds */
+{
+#if !defined(__EMSCRIPTEN__) && !defined(PLAT_HOST)
+    uint32_t s;
+    if (!bank_fresh)
+        return;
+    bank_fresh = 0;
+    for (fac_k = 0; fac_k < FAC_STARTER; fac_k++) {
+        s = fac_k;
+        if (bank_write(s, FAC_SOUNDS[s].frames, FAC_SOUNDS[s].rate, FAC_SOUNDS[s].name, FAC_SOUNDS[s].crc, 1,
+                       fac_fill, (void *)&FAC_SOUNDS[s], fac_progress) != BANK_OK)
+            break;
+        plat_yield();
+    }
+    if (cur_slot < 0 && first_ok_slot() >= 0)
+        select_slot(first_ok_slot());
 #endif
+}
 
 /* ================================================================ boot */
 void app_init(void)

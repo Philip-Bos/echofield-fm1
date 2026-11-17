@@ -51,6 +51,8 @@ void app_usb_cmd(const uint8_t *d, uint32_t n);
 void app_splash(void);
 
 #define APP_WEB                          /* the emulator page's sample editor (web.c) */
+#define APP_BOOT                         /* a fresh install: the starter sounds from the firmware (app_boot) */
+void app_boot(void);
 #define APP_HOST_EXPECT                  /* the host simulator's checks (the tests directory) */
 int app_expect(const char *what, int *got);
 #define APP_HOST_CMD

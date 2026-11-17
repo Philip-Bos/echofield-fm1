@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.15
+
+- **The starter sounds come with the firmware.** At the first start after a new install (no ECHOFIELD bank on the
+  FM-1 yet), ECHOFIELD puts its 8 starter sounds in by itself, so they are there whatever installed it: the flasher,
+  The Firmware Hub, M-Flasher. An update, or a bank you emptied, is never touched. The flasher's "All 14" adds the
+  other 6 to a bank of factory sounds.
+- **M-Flasher** in the install notes (README, the flasher, the manual): for an FM-1 running a firmware the flasher can't
+  find, one behind M-Bootloader for example.
+
 ## 0.2.14
 
 - **Hold notes for drones** (#7). Hold **ENV** on any page to turn LATCH on or off; the header shows LATCH while it

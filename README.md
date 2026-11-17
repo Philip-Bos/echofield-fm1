@@ -19,8 +19,9 @@
   <img src="docs/img/14-pulse.png" width="240" alt="PULSE mode">
 </p>
 
-> **New in 0.2.9: follows MIDI clock.** START and STOP from a DAW or another FM-1 start and stop ECHOFIELD, and PULSE
-> and the delay lock to the clock's tempo. Every change is in the [changelog](CHANGELOG.md).
+> **New in 0.2.14: hold notes for drones.** Hold **ENV** on any page to turn LATCH on: a chord keeps sounding after
+> you let go, the next chord replaces it, and pressing the one note held again stops it. Hold **ENV** again to let
+> everything go. Every change is in the [changelog](CHANGELOG.md).
 
 ---
 
@@ -33,7 +34,7 @@ chip.
 
 - **Six modes:** CLOUD, DUST, TAPE, BLOOM, PULSE and DRIFT, each a different way of playing the same sound.
 - **Playable:** the keys play the cloud at any pitch, with velocity. Chords work too, and the DRIFT ORACLE picks notes
-  in a key you choose.
+  in a key you choose. Hold **ENV** to latch: a chord keeps sounding for drones until the next one replaces it.
 - **Performance effects:** hold **FX** and the black keys become freeze, reverse, octaves, stutter, tape stop, delay
   throw, shimmer and more, for as long as you hold them.
 - **RANDOM with locks:** **ARP** rolls new settings that still sound good. Lock the knobs you love, and undo if you went
@@ -64,6 +65,12 @@ talk to the FM-1 over USB (Web MIDI).
 the three boxes and press **Install**. It takes about a minute, and the factory sounds go on afterwards.
 
 <p align="center"><img src="docs/img/companion/flasher.png" width="720" alt="the flasher"></p>
+
+**Coming from another firmware the flasher can't find?** Some firmwares don't answer installers over USB (one behind
+M-Bootloader, say). Install the package from the [latest release](https://github.com/Philip-Bos/echofield-fm1/releases/latest) with [M-Flasher](https://jvitkauskas.github.io/m-apps/flasher/guide/) instead: ECHOFIELD
+puts its 8 starter sounds on by itself at its first start, and the flasher does updates and the other 6 factory sounds
+afterwards. ECHOFIELD runs on the older and the newer FM-1 (the flash chip changed in late 2026, supported since
+0.2.10). M-Bootloader's own page says it is little tested on that newer chip, so on a newer FM-1 leave it off.
 
 ### Is it safe?
 
@@ -190,7 +197,7 @@ python3 -m venv .venv && .venv/bin/pip install Pillow fonttools
 tools/run_tests.sh                          # every test; no FM-1 needed
 python3 tools/build.py app                  # the firmware: app/build/echofield.fwsc
 python3 tools/build.py app --host           # the app in fm1-base's FM-1 simulator
-tools/release.sh 0.2.14                     # tests, release build, emulator, the companion's package, dist/
+tools/release.sh 0.2.15                     # tests, release build, emulator, the companion's package, dist/
 ```
 
 The tests cover:

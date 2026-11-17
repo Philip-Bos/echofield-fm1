@@ -73,7 +73,7 @@ export function init() {
     <li><b>Both of the FM-1's cores</b> make the sound now: no more crackle when you play hard. <b>GLO</b> shows <b>2 CORES</b>.</li>
     <li><b>A new Sound page</b> in this app: the sound's waveform to drag, big knobs, an XY pad and every effect on view.</li>
     <li><b>The emulator</b>: the whole firmware in your browser, on a drawn FM-1 — try it with no FM-1 at all.</li>
-    <li><b>Installing</b> is its own page now (<b>Firmware…</b>), on computers only, and it puts the factory sounds on by itself.</li>
+    <li><b>Installing</b> is its own page now (<b>Firmware…</b>), on computers only, and ECHOFIELD puts its starter sounds on by itself.</li>
     <li><b>Cleaner output</b>: long reverbs with shimmer no longer build up a hidden offset that took the headroom
       (0.2.4); no more crackle on headphones at high volume (0.2.7: the widest stereo is held in a little near full
       MASTER); a new <b>OUTPUT</b> ceiling, 80 % at first (GLO → SYSTEM).</li>
@@ -244,6 +244,11 @@ export function init() {
     flawless take, record its headphone output with an audio interface instead.</p></details>
   <details><summary>Updating ECHOFIELD</summary><p>Open <b>Firmware…</b> on a computer and install: your sounds and presets stay.
     (On a phone or tablet the button is hidden: installing there is too easy to interrupt.)</p></details>
+  <details><summary>Firmware… can't find the FM-1 (another firmware on it)</summary><p>Some firmwares don't answer installers
+    over USB (one behind M-Bootloader, say). Install the package from the <a href="https://github.com/Philip-Bos/echofield-fm1/releases/latest" target="_blank" rel="noopener">latest
+    release</a> with <a href="https://jvitkauskas.github.io/m-apps/flasher/guide/" target="_blank" rel="noopener">M-Flasher</a> instead: ECHOFIELD puts its 8 starter sounds on
+    by itself at its first start. On an FM-1 sold from late 2026 (the newer flash chip) leave M-Bootloader off: its own
+    page says it is little tested there. ECHOFIELD runs on both.</p></details>
 
   <details><summary>Back to the original firmware</summary><p>In <b>Firmware…</b>, under "Back to the stock firmware", or with M-VAVE's own M-UPGRADE.</p></details>
 </section>
