@@ -20,7 +20,7 @@ const SAYS = {
   TAPE: "old-tape character: wobble, warmth and wear",
   ATTACK: "how slowly the sound fades in when you press a key",
   RELEASE: "how long it rings on after you let go",
-  KEYS: "GATE: sounds while held · LATCH: press once to hold, again to stop",
+  KEYS: "GATE: sounds while held · LATCH: a chord stays on, the next replaces it (hold ENV: on / off)",
   VELOCITY: "how much harder key presses play louder",
   SIZE: "makes all grains shorter or longer",
   DENSITY: "how many grains are born each second",
@@ -138,6 +138,7 @@ export function init() {
     <li><b>REC</b> records up to 5 seconds of what you hear into a new sound (press again to stop) — resampling, like the OP-1.</li>
     <li><b>SEQ</b> freezes everything in place.</li>
     <li><b>EDIT</b> on the SAMPLE page: LISTEN — the sound as it is, plain (press again to stop).</li>
+    <li>Hold <b>ENV</b>: <b>LATCH</b> on or off, for drones. A chord keeps sounding after you let go; the next chord replaces it, and pressing the one note held again stops it. LATCH shows at the top of the screen.</li>
     <li><b>ARP</b> randomises this page; hold it for everything. Hold <b>ARP</b> and turn a knob to <b>lock</b> it (a lock shows on its dial).</li>
     <li><b>OCT- / OCT+</b> shift the keys an octave. Both together: undo.</li>
   </ul>

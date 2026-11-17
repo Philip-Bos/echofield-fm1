@@ -1,0 +1,53 @@
+# LATCH (issue #7): ENV held turns it on and off; a chord stays on, a new chord replaces it, the one note held
+# pressed again stops; LATCH off lets go of everything
+wait 1500
+listen
+press ENV
+wait 700
+release ENV
+wait 200
+said LATCH ON
+expect page 0
+key w0 down
+key w2 down
+key w4 down
+wait 50
+key w0 up
+key w2 up
+key w4 up
+wait 300
+expect nnotes 3
+key w7 down
+wait 50
+key w7 up
+wait 200
+expect nnotes 1
+key w7 down
+wait 50
+key w7 up
+wait 200
+expect nnotes 0
+key w1 down
+wait 50
+key w3 down
+wait 50
+key w1 up
+key w3 up
+wait 200
+expect nnotes 2
+where
+wait 200
+said LATCH
+
+press ENV
+wait 700
+release ENV
+wait 200
+said LATCH OFF
+expect nnotes 0
+key w0 down
+wait 100
+expect nnotes 1
+key w0 up
+wait 100
+expect nnotes 0

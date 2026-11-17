@@ -102,6 +102,7 @@ explains it.
 | **PRESETS** | browse the presets; the one you stop on loads |
 | **HOME ENV LFO FX SEL EDIT GLO SAVE** | pages of knobs; press again for the group's next page |
 | **PLAY** · **REC** · **SEQ** | the endless sound · RESAMPLE · FREEZE |
+| hold **ENV** | LATCH on / off: a chord stays on after you let go, the next chord replaces it, the one note held pressed again stops |
 | **ARP** | RANDOM for this page (hold: everything); hold **ARP** and turn a knob to lock it |
 | **OCT-** · **OCT+** | the keys' octave; both together undo RANDOM |
 | **FX** + a black key | a performance effect while held |
@@ -189,7 +190,7 @@ python3 -m venv .venv && .venv/bin/pip install Pillow fonttools
 tools/run_tests.sh                          # every test; no FM-1 needed
 python3 tools/build.py app                  # the firmware: app/build/echofield.fwsc
 python3 tools/build.py app --host           # the app in fm1-base's FM-1 simulator
-tools/release.sh 0.2.13                     # tests, release build, emulator, the companion's package, dist/
+tools/release.sh 0.2.14                     # tests, release build, emulator, the companion's package, dist/
 ```
 
 The tests cover:

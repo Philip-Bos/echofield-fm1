@@ -717,6 +717,15 @@ static void notes_push(void)             /* the keys, latched keys and MIDI note
     c->nnotes = (uint8_t)n;
 }
 static void note_new(void) { ef_ctl()->note_seq++; }
+static void midi_note_out(int on, uint32_t note, uint32_t vel);
+static void latch_clear(void)            /* LATCH: every held key let go, its MIDI note too */
+{
+    uint32_t k;
+    for (k = 0; k < NKEYS; k++)
+        if ((ui.latched >> k) & 1u)
+            midi_note_out(0, (uint32_t)(53 + (int32_t)k + 12 * ui.octave), 0);
+    ui.latched = 0;
+}
 
 static void midi_note_out(int on, uint32_t note, uint32_t vel)
 {
@@ -944,6 +953,8 @@ static void sr_where(void)               /* the whole screen: the mode, what pla
         text_cat(t, ", PLAYING");
     if (c->freeze)
         text_cat(t, ", FROZEN");
+    if ((int)pv[P_KEYMODE] == KEYMODE_LATCH)
+        text_cat(t, ", LATCH");
     if (ef_rec_on())
         text_cat(t, ", RECORDING");
     preset_label(ui.preset_cursor, p);
@@ -1182,7 +1193,7 @@ static int held(uint32_t b) { return (int)((ui.btn >> b) & 1u); }
 
 static void input(void)
 {
-    uint32_t btn = plat_buttons(), keys, k, now = plat_ms(), press, rel;
+    uint32_t btn = plat_buttons(), keys, k, now = plat_ms(), press, rel, fresh;
     static const uint8_t WK[16] = PLAT_WHITE_KEYS, BK[11] = PLAT_BLACK_KEYS;
     /* modifiers from this very input (a button and a key pressed in one scan count as a combination) */
 #define HB(x) ((btn >> (x)) & 1u)
@@ -1197,6 +1208,7 @@ static void input(void)
         }
     press = keys & ~ui.keys;
     rel = ui.keys & ~keys;
+    fresh = !ui.keys;                    /* LATCH: no key was down, so a new chord begins */
     /* ---- keys */
     for (k = 0; k < NKEYS; k++) {
         uint32_t bit = 1u << k;
@@ -1245,9 +1257,18 @@ static void input(void)
             if (mod)
                 continue;
             ui.vel[k] = touch_vel(k);
-            if ((int)pv[P_KEYMODE] == KEYMODE_LATCH) {
-                ui.latched ^= bit;
-                midi_note_out((ui.latched & bit) != 0, (uint32_t)(53 + (int32_t)k + 12 * ui.octave), ui.vel[k]);
+            if ((int)pv[P_KEYMODE] == KEYMODE_LATCH) {   /* a new chord replaces the held one; keys added */
+                if (fresh) {                             /* while others are down join it; the one note */
+                    uint32_t only = ui.latched == bit;   /* held, pressed again, stops */
+                    fresh = 0;
+                    latch_clear();
+                    if (only) {
+                        notes_changed = 1;
+                        continue;
+                    }
+                }
+                ui.latched |= bit;
+                midi_note_out(1, (uint32_t)(53 + (int32_t)k + 12 * ui.octave), ui.vel[k]);
             } else
                 midi_note_out(1, (uint32_t)(53 + (int32_t)k + 12 * ui.octave), ui.vel[k]);
             note_new();
@@ -1271,7 +1292,7 @@ static void input(void)
     }
     ui.keys = keys;
     if ((int)pv[P_KEYMODE] != KEYMODE_LATCH && ui.latched) {
-        ui.latched = 0;
+        latch_clear();
         notes_changed = 1;
     }
     if (notes_changed)
@@ -1383,6 +1404,13 @@ static void input(void)
         ui.used[B_HOME] = 1;
         ui.d_field = ui.d_knobs = 1;
         sr_help();
+    }
+    if ((btn >> B_ENV & 1u) && !ui.used[B_ENV] && now - ui.down_at[B_ENV] >= 500u) {   /* ENV held: LATCH on / off */
+        int on = (int)pv[P_KEYMODE] != KEYMODE_LATCH;
+        ui.used[B_ENV] = 1;
+        param_set(P_KEYMODE, (float)(on ? KEYMODE_LATCH : KEYMODE_GATE), 0);
+        ui.d_head = ui.d_knobs = 1;
+        app_say("LATCH", on ? "ON: KEYS STAY ON" : "OFF");
     }
     if ((btn >> B_ARP & 1u) && !ui.used[B_ARP] && now - ui.down_at[B_ARP] >= 700u) {
         ui.used[B_ARP] = 1;
@@ -1585,6 +1613,10 @@ static void draw_head(void)
     if (c->freeze) {
         text_r(x, 4, &FONT_XS, "FRZ", col_k[0]);
         x -= text_w(&FONT_XS, "FRZ") + 6;
+    }
+    if ((int)pv[P_KEYMODE] == KEYMODE_LATCH) {
+        text_r(x, 4, &FONT_XS, "LATCH", col_k[2]);
+        x -= text_w(&FONT_XS, "LATCH") + 6;
     }
     if (ses_dirty) {
         cv_rect(x - 4, 9, 3, 3, col_dim);  /* not saved yet */
@@ -1916,7 +1948,7 @@ static void draw_audio(void)             /* GLO's second page: OUTPUT and USB, w
 static const char *const HELP[NPAGES] = {
     "TEXTURE grain size  SCATTER spread|DRIFT wander  EVOLVE self-motion",
     "PITCH semitones  HARMONY octaves|REVERB amount  TAPE wear",
-    "ATTACK / RELEASE of the keys|KEYS gate or latch  VELOCITY",
+    "ATTACK / RELEASE of the keys|KEYS gate or latch (hold ENV)  VELOCITY",
     "SIZE / DENSITY multipliers|ENVELOPE grain shape  TONE dark-airy",
     "SCAN auto-move  REVERSE chance|PITCH RND / SIZE RND per grain",
     "FILTER type  CUTOFF  RESO|DRIVE saturation after it",
@@ -1932,7 +1964,7 @@ static const char *const HELP[NPAGES] = {
 static const char *const HELP_ALL[NHELP_ALL] = {"SELECT position  ALGO mode  PRESETS",
                                                 "PLAY drone  REC resample  SEQ freeze",
                                                 "ARP random (hold: all)  ARP+knob lock",
-                                                "OCT- + OCT+ undo   keys play notes",
+                                                "OCT- + OCT+ undo   ENV hold: latch",
                                                 "FX+black key: effect  EDIT+white: sample",
                                                 "SAVE+white: preset  SEL+key: root"};
 static void draw_help(void)

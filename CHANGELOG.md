@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.14
+
+- **Hold notes for drones** (#7). Hold **ENV** on any page to turn LATCH on or off; the header shows LATCH while it
+  is on. Play a chord and it keeps sounding after you let go; the next chord replaces it, keys added while others are
+  still down join it, and pressing the one note held again stops it. Turning LATCH off lets everything go. (LATCH used
+  to toggle each key on its own, and was only on ENV → KEYS.)
+
 ## 0.2.13
 
 - **The screen reader hears everything** (fm1-reader, #2). Before, ECHOFIELD only spoke its pop-up messages (SAVE,

@@ -64,6 +64,9 @@ $B/host/echofield_host app/tests/basic.txt $B/test | tail -1 | grep -v FAILED ||
 echo "== MIDI clock in"
 $B/host/echofield_host app/tests/clock.txt $B/test | tail -1 | grep -v FAILED || { $B/host/echofield_host app/tests/clock.txt $B/test | grep FAIL; exit 1; }
 
+echo "== LATCH"
+$B/host/echofield_host app/tests/latch.txt $B/test | tail -1 | grep -v FAILED || { $B/host/echofield_host app/tests/latch.txt $B/test | grep FAIL; exit 1; }
+
 echo "== the screen reader (fm1-reader)"
 $B/host/echofield_host app/tests/reader.txt $B/test | tail -1 | grep -v FAILED || { $B/host/echofield_host app/tests/reader.txt $B/test | grep FAIL; exit 1; }
 
